@@ -47,10 +47,10 @@ Cuerate is a mobile-first social media platform for AI video creators to share, 
 - **Routing**: React Router v7
 - **Styling**: Tailwind CSS v4 + Custom CSS Variables
 - **Icons**: Lucide React
-- **Backend** (To be configured): Firebase
-  - Firestore for data
-  - Firebase Auth for authentication
-  - Firebase Storage for videos/images
+- **Backend**:
+  - Firebase Firestore for relational/social data (users, prompts, follows, likes, saves, copies, notifications)
+  - Firebase Auth for authentication (Google OAuth + email link)
+  - **Walrus** for decentralized media storage (prompt videos, thumbnails, avatars, workflow step media). See `walrus-integration-guide.md` for the full integration playbook. Network is selected via `VITE_WALRUS_NETWORK` (`testnet` | `mainnet`) — switching is a one-line env change.
 
 ## Setup Instructions
 

@@ -13,22 +13,8 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { db, firebaseEnabled } from './firebase';
 import {
-  fetchSignInMethodsForEmail,
-  GoogleAuthProvider,
-  isSignInWithEmailLink,
-  onAuthStateChanged,
-  sendSignInLinkToEmail,
-  signInWithEmailAndPassword,
-  signInWithEmailLink,
-  signInWithPopup,
-  signOut,
-  User as FirebaseAuthUser,
-} from 'firebase/auth';
-import { auth, db, firebaseEnabled } from './firebase';
-import {
-  AuthLog,
-  AuthLogEvent,
   availableModels,
   availableMoodLabels,
   availableStyleTags,
@@ -44,18 +30,21 @@ import {
   WorkflowCreateInput,
 } from './types';
 import { mockCollections, mockNotifications, mockPrompts, mockUsers, mockWorkflows } from './mockData';
-import { isSupabaseConfigured, supabase, SUPABASE_BUCKET, SUPABASE_URL } from './supabase';
+import {
+  extractWalrusBlobIdFromUrl,
+  isWalrusConfigured,
+  walrusConfig,
+  walrusPublishBlob,
+} from './walrus';
 
+// Local mirror of the authenticated user, so mock mode (no Firebase) can
+// keep a session in localStorage. With zkLogin in production, the source of
+// truth is the Enoki session managed by the AuthProvider.
 const LOCAL_AUTH_USER_KEY = 'cuerate.auth.user';
-const LOCAL_AUTH_SESSION_KEY = 'cuerate.auth.sessionUid';
-const LOCAL_EMAIL_LINK_KEY = 'cuerate.auth.emailLink';
 const authListeners = new Set<(user: User | null) => void>();
 
 const COLLECTIONS = {
   users: 'users',
-  usersPrivate: 'usersPrivate',
-  authLogs: 'authLogs',
-  emailLookup: 'emailLookup',
   prompts: 'prompts',
   promptLikes: 'promptLikes',
   promptSaves: 'promptSaves',
@@ -74,10 +63,6 @@ const QUERY_LIMITS = {
   feedWorkflows: 150,
 } as const;
 
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
-}
-
 function cloneDate<T extends { createdAt: Date }>(item: T): T {
   return {
     ...item,
@@ -91,10 +76,6 @@ function clonePrompt(prompt: Prompt): Prompt {
 
 function cloneUser(user: User): User {
   return cloneDate(user);
-}
-
-function cloneAuthLog(authLog: AuthLog): AuthLog {
-  return cloneDate(authLog);
 }
 
 function cloneNotification(notification: Notification): Notification {
@@ -148,44 +129,25 @@ function toDate(value: unknown): Date {
   return new Date();
 }
 
-function extractSupabaseStoragePathFromPublicUrl(value: unknown): string | null {
-  if (typeof value !== 'string' || value.trim().length === 0 || SUPABASE_URL.length === 0) {
-    return null;
-  }
-
-  try {
-    const sourceUrl = new URL(value);
-    const supabaseUrl = new URL(SUPABASE_URL);
-    if (sourceUrl.origin !== supabaseUrl.origin) {
-      return null;
-    }
-
-    const publicMarker = `/storage/v1/object/public/${SUPABASE_BUCKET}/`;
-    const markerIndex = sourceUrl.pathname.indexOf(publicMarker);
-    if (markerIndex === -1) {
-      return null;
-    }
-
-    const encodedPath = sourceUrl.pathname.slice(markerIndex + publicMarker.length);
-    if (!encodedPath) {
-      return null;
-    }
-
-    return decodeURIComponent(encodedPath);
-  } catch {
-    return null;
-  }
+// Walrus blobs are content-addressed and immutable from the client. We keep
+// the helper for analytics / future Move-attribution lookups, but media
+// "deletion" simply drops the Firestore reference — the blob expires on its
+// own after its paid epochs lapse.
+function extractWalrusBlobIdFromUrlSafe(value: unknown): string | null {
+  return extractWalrusBlobIdFromUrl(value);
 }
 
 function deserializeUser(id: string, data: Record<string, unknown>): User {
+  // The Firestore doc id IS the user's Sui address. We expose it as both
+  // `uid` (the legacy field name used everywhere downstream) and
+  // `suiAddress` (the explicit name used by onchain code paths).
   return {
     uid: id,
+    suiAddress: id,
     handle: String(data.handle ?? ''),
     displayName: String(data.displayName ?? ''),
     avatarUrl: String(data.avatarUrl ?? ''),
     email: data.email ? String(data.email) : undefined,
-    emailVerified: typeof data.emailVerified === 'boolean' ? data.emailVerified : undefined,
-    authProvider: (data.authProvider as User['authProvider']) ?? undefined,
     bio: String(data.bio ?? ''),
     links: (data.links as User['links']) ?? {},
     primaryModels: Array.isArray(data.primaryModels) ? data.primaryModels.map(String) : [],
@@ -193,20 +155,10 @@ function deserializeUser(id: string, data: Record<string, unknown>): User {
     following: Number(data.following ?? 0),
     totalCopies: Number(data.totalCopies ?? 0),
     totalPrompts: Number(data.totalPrompts ?? 0),
+    hasOnboarded: typeof data.hasOnboarded === 'boolean' ? data.hasOnboarded : undefined,
     createdAt: toDate(data.createdAt),
     updatedAt: data.updatedAt ? toDate(data.updatedAt) : undefined,
     lastLoginAt: data.lastLoginAt ? toDate(data.lastLoginAt) : undefined,
-  };
-}
-
-function deserializeAuthLog(id: string, data: Record<string, unknown>): AuthLog {
-  return {
-    id,
-    userId: String(data.userId ?? ''),
-    event: (data.event as AuthLogEvent) ?? 'sign_in',
-    provider: (data.provider as AuthLog['provider']) ?? 'mock',
-    email: data.email ? String(data.email) : undefined,
-    createdAt: toDate(data.createdAt),
   };
 }
 
@@ -351,7 +303,6 @@ function writeLocalAuthUser(user: User | null) {
 
   if (!user) {
     window.localStorage.removeItem(LOCAL_AUTH_USER_KEY);
-    window.localStorage.removeItem(LOCAL_AUTH_SESSION_KEY);
     return;
   }
 
@@ -362,47 +313,6 @@ function writeLocalAuthUser(user: User | null) {
       createdAt: user.createdAt.toISOString(),
     }),
   );
-  window.localStorage.setItem(LOCAL_AUTH_SESSION_KEY, user.uid);
-}
-
-function readPendingEmailLink() {
-  if (!canUseBrowserStorage()) {
-    return null;
-  }
-
-  const raw = window.localStorage.getItem(LOCAL_EMAIL_LINK_KEY);
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as {
-      mode: 'login' | 'signup';
-      email: string;
-      displayName?: string;
-      handle?: string;
-    };
-  } catch {
-    return null;
-  }
-}
-
-function writePendingEmailLink(value: {
-  mode: 'login' | 'signup';
-  email: string;
-  displayName?: string;
-  handle?: string;
-} | null) {
-  if (!canUseBrowserStorage()) {
-    return;
-  }
-
-  if (!value) {
-    window.localStorage.removeItem(LOCAL_EMAIL_LINK_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(LOCAL_EMAIL_LINK_KEY, JSON.stringify(value));
 }
 
 function emitAuthUser(user: User | null) {
@@ -411,22 +321,27 @@ function emitAuthUser(user: User | null) {
   }
 }
 
-function buildMockUserProfile(input: { uid: string; email: string; displayName: string; handle: string }): User {
+// Build a fresh User record for a Sui address. Used both in mock mode and
+// in production for the very first sign-in. The handle defaults to
+// user_<addr suffix>; the onboarding flow will let the user customize it.
+function buildFreshUserForAddress(input: { suiAddress: string; email?: string; handle?: string }): User {
+  const fallbackHandle = `user_${input.suiAddress.slice(2, 8).toLowerCase()}`;
+  const handle = sanitizeHandle(input.handle || '') || fallbackHandle;
   return {
-    uid: input.uid,
-    handle: input.handle,
-    displayName: input.displayName,
-    avatarUrl: 'https://images.unsplash.com/photo-1649589244330-09ca58e4fa64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdCUyMHdvbWFufGVufDF8fHx8MTc3NTM3OTAyOXww&ixlib=rb-4.1.0&q=80&w=200',
+    uid: input.suiAddress,
+    suiAddress: input.suiAddress,
+    handle,
+    displayName: handle,
+    avatarUrl: '',
     email: input.email,
-    emailVerified: false,
-    authProvider: 'mock',
-    bio: `New to Cuerate from ${input.email}`,
+    bio: '',
     links: {},
-    primaryModels: ['Sora'],
+    primaryModels: [],
     followers: 0,
     following: 0,
     totalCopies: 0,
     totalPrompts: 0,
+    hasOnboarded: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastLoginAt: new Date(),
@@ -449,33 +364,6 @@ function getFallbackUsers() {
   );
 
   return [cloneUser(localAuthUser), ...users.map(cloneUser)];
-}
-
-function buildUserProfileFromAuthUser(firebaseUser: FirebaseAuthUser, extras?: Partial<User>): User {
-  const baseHandle = sanitizeHandle(extras?.handle || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || firebaseUser.uid) || 'creator';
-
-  return {
-    uid: firebaseUser.uid,
-    handle: baseHandle,
-    displayName: extras?.displayName || firebaseUser.displayName || baseHandle,
-    avatarUrl:
-      extras?.avatarUrl ||
-      firebaseUser.photoURL ||
-      'https://images.unsplash.com/photo-1649589244330-09ca58e4fa64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdCUyMHdvbWFufGVufDF8fHx8MTc3NTM3OTAyOXww&ixlib=rb-4.1.0&q=80&w=200',
-    email: firebaseUser.email ?? extras?.email,
-    emailVerified: firebaseUser.emailVerified,
-    authProvider: firebaseUser.providerData.some((provider) => provider.providerId === 'google.com') ? 'google' : 'password',
-    bio: extras?.bio || `New to Cuerate from ${firebaseUser.email ?? 'Firebase Auth'}`,
-    links: extras?.links || {},
-    primaryModels: extras?.primaryModels || ['Sora'],
-    followers: extras?.followers ?? 0,
-    following: extras?.following ?? 0,
-    totalCopies: extras?.totalCopies ?? 0,
-    totalPrompts: extras?.totalPrompts ?? 0,
-    createdAt: extras?.createdAt ?? new Date(),
-    updatedAt: new Date(),
-    lastLoginAt: new Date(),
-  };
 }
 
 async function getUserByUid(uid: string): Promise<User | null> {
@@ -508,9 +396,11 @@ async function upsertUserProfile(profile: User) {
   const firestore = requireDb();
   const publicProfile = stripUndefinedFields({
     uid: profile.uid,
+    suiAddress: profile.suiAddress,
     handle: profile.handle,
     displayName: profile.displayName,
     avatarUrl: profile.avatarUrl,
+    email: profile.email,
     bio: profile.bio,
     links: profile.links,
     primaryModels: profile.primaryModels,
@@ -518,52 +408,14 @@ async function upsertUserProfile(profile: User) {
     following: profile.following,
     totalCopies: profile.totalCopies,
     totalPrompts: profile.totalPrompts,
+    hasOnboarded: profile.hasOnboarded,
     createdAt: profile.createdAt,
-    updatedAt: profile.updatedAt,
+    updatedAt: profile.updatedAt ?? new Date(),
+    lastLoginAt: profile.lastLoginAt,
   });
   await setDoc(doc(firestore, COLLECTIONS.users, profile.uid), publicProfile, { merge: true });
 
-  const privateProfile = stripUndefinedFields({
-    uid: profile.uid,
-    email: profile.email,
-    emailVerified: profile.emailVerified,
-    authProvider: profile.authProvider,
-    lastLoginAt: profile.lastLoginAt,
-    updatedAt: new Date(),
-  });
-  if (Object.keys(privateProfile).length > 1) {
-    await setDoc(doc(firestore, COLLECTIONS.usersPrivate, profile.uid), privateProfile, { merge: true });
-  }
-
   return profile;
-}
-
-async function upsertEmailLookup(input: { email: string; userId: string }) {
-  if (!firebaseEnabled) {
-    return;
-  }
-
-  const firestore = requireDb();
-  await setDoc(
-    doc(firestore, COLLECTIONS.emailLookup, normalizeEmail(input.email)),
-    {
-      userId: input.userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    { merge: true },
-  );
-}
-
-async function emailExists(email: string) {
-  if (!firebaseEnabled) {
-    const localUser = readLocalAuthUser();
-    return normalizeEmail(localUser?.email ?? '') === normalizeEmail(email);
-  }
-
-  const firestore = requireDb();
-  const snapshot = await getDoc(doc(firestore, COLLECTIONS.emailLookup, normalizeEmail(email)));
-  return snapshot.exists();
 }
 
 async function handleExists(handle: string) {
@@ -659,28 +511,6 @@ async function syncAuthorIdentityOnContent(input: {
   ]);
 }
 
-async function logAuthEvent(input: Omit<AuthLog, 'id' | 'createdAt'>) {
-  const authLog: AuthLog = {
-    id: crypto.randomUUID(),
-    createdAt: new Date(),
-    ...input,
-  };
-
-  if (!firebaseEnabled) {
-    return cloneAuthLog(authLog);
-  }
-
-  const firestore = requireDb();
-  const authLogDocument = { ...authLog } as Omit<AuthLog, 'id'> & { id?: string };
-  delete authLogDocument.id;
-  const created = await addDoc(collection(firestore, COLLECTIONS.authLogs), stripUndefinedFields(authLogDocument));
-
-  return {
-    ...authLog,
-    id: created.id,
-  };
-}
-
 async function createNotification(input: Omit<Notification, 'id' | 'read' | 'createdAt'>) {
   if (!input.userId || !input.fromUid || input.userId === input.fromUid) {
     return;
@@ -708,284 +538,182 @@ async function createNotification(input: Omit<Notification, 'id' | 'read' | 'cre
   }
 }
 
+// Authentication is owned by Enoki zkLogin (see src/lib/auth-context.tsx).
+// This module exposes only the Firestore-backed user operations that the rest
+// of the app calls. The flow:
+//   1. User signs in with Google -> Enoki returns a Sui address.
+//   2. AuthProvider calls `authApi.getOrCreateUserBySuiAddress(address)`.
+//   3. That function looks up or creates the user doc in Firestore, keyed by
+//      the Sui address (lowercase).
+//   4. AuthProvider broadcasts the User to the rest of the app via React context.
+//
+// `subscribe` is kept for backward compatibility with hooks-free callers but is
+// inert in production (the AuthProvider drives identity directly).
 export const authApi = {
   async getCurrentUser(): Promise<User | null> {
+    // Without a hook context we cannot know who is signed in via Enoki.
+    // Callers should use `useAuth()` instead. Kept for code paths that just
+    // need the locally-cached profile (mock mode).
     if (!firebaseEnabled) {
-      const localAuthUser = readLocalAuthUser();
-      return localAuthUser ? cloneUser(localAuthUser) : null;
+      return readLocalAuthUser();
+    }
+    return null;
+  },
+
+  async getOrCreateUserBySuiAddress(
+    suiAddress: string,
+    options: { email?: string; defaultHandle?: string } = {},
+  ): Promise<User> {
+    if (!suiAddress) {
+      throw new Error('Missing Sui address.');
     }
 
-    if (!auth?.currentUser) {
-      return null;
+    const normalizedAddress = suiAddress.toLowerCase();
+
+    if (!firebaseEnabled) {
+      const cached = readLocalAuthUser();
+      if (cached?.suiAddress === normalizedAddress) {
+        return cloneUser({ ...cached, lastLoginAt: new Date() });
+      }
+      const fresh = buildFreshUserForAddress({
+        suiAddress: normalizedAddress,
+        email: options.email,
+        handle: options.defaultHandle,
+      });
+      writeLocalAuthUser(fresh);
+      emitAuthUser(fresh);
+      return cloneUser(fresh);
     }
 
-      return getUserByUid(auth.currentUser.uid);
-    },
-
-    async sendEmailLink(input: { mode: 'login' | 'signup'; email: string; displayName?: string; handle?: string }): Promise<void> {
-      const normalizedEmail = normalizeEmail(input.email);
-      const normalizedHandle = sanitizeHandle(input.handle || normalizedEmail.split('@')[0]);
-
-      if (input.mode === 'signup') {
-        if (normalizedHandle && (await handleExists(normalizedHandle))) {
-          throw new Error('Username taken. Choose another one.');
-        }
-      }
-
-      writePendingEmailLink({
-        mode: input.mode,
-        email: normalizedEmail,
-        handle: normalizedHandle,
-      });
-
-      if (!firebaseEnabled || !auth) {
-        return;
-      }
-
-      const actionCodeSettings = {
-        url: `${window.location.origin}/auth`,
-        handleCodeInApp: true,
+    const existing = await getUserByUid(normalizedAddress);
+    if (existing) {
+      // Returning user: refresh lastLoginAt + optionally backfill email.
+      const updated: User = {
+        ...existing,
+        lastLoginAt: new Date(),
+        email: existing.email ?? options.email,
       };
+      await upsertUserProfile(updated);
+      return updated;
+    }
 
-      await sendSignInLinkToEmail(auth, normalizedEmail, actionCodeSettings);
-      await logAuthEvent({
-        userId: normalizedEmail,
-        event: 'email_link_sent',
-        provider: 'password',
-        email: normalizedEmail,
+    // First-time sign-in: ensure the default handle is unique, then write.
+    const fallbackHandle = `user_${normalizedAddress.slice(2, 8).toLowerCase()}`;
+    const uniqueHandle = await ensureUniqueHandle(
+      options.defaultHandle || fallbackHandle,
+      normalizedAddress,
+    );
+    const fresh = buildFreshUserForAddress({
+      suiAddress: normalizedAddress,
+      email: options.email,
+      handle: uniqueHandle,
+    });
+    await upsertUserProfile(fresh);
+    return fresh;
+  },
+
+  async updateProfile(input: {
+    uid: string;
+    handle: string;
+    bio: string;
+    avatarUrl?: string;
+    links?: User['links'];
+    primaryModels?: string[];
+    hasOnboarded?: boolean;
+  }): Promise<User> {
+    if (!input.uid) {
+      throw new Error('Missing user id.');
+    }
+
+    const existingUser = await getUserByUid(input.uid);
+    if (!existingUser) {
+      throw new Error('Profile not found.');
+    }
+
+    const normalizedHandle = sanitizeHandle(input.handle);
+    if (!normalizedHandle) {
+      throw new Error('Username must include letters, numbers, or underscores.');
+    }
+
+    if (await isHandleTakenByAnotherUser(normalizedHandle, input.uid)) {
+      throw new Error('Username taken. Choose another one.');
+    }
+
+    const nextUser: User = {
+      ...existingUser,
+      handle: normalizedHandle,
+      displayName: normalizedHandle,
+      bio: input.bio.trim(),
+      avatarUrl: input.avatarUrl ?? existingUser.avatarUrl,
+      links: input.links ?? existingUser.links,
+      primaryModels: input.primaryModels ?? existingUser.primaryModels,
+      hasOnboarded: input.hasOnboarded ?? existingUser.hasOnboarded,
+      updatedAt: new Date(),
+    };
+
+    const savedUser = await upsertUserProfile(nextUser);
+
+    const handleChanged = savedUser.handle !== existingUser.handle;
+    const avatarChanged = savedUser.avatarUrl !== existingUser.avatarUrl;
+
+    if (handleChanged || avatarChanged) {
+      await syncAuthorIdentityOnContent({
+        uid: savedUser.uid,
+        handle: handleChanged ? savedUser.handle : undefined,
+        avatarUrl: avatarChanged ? savedUser.avatarUrl : undefined,
       });
-    },
+    }
 
-    async completeEmailLinkSignIn(currentUrl: string): Promise<User | null> {
-      const pending = readPendingEmailLink();
+    writeLocalAuthUser(savedUser);
+    emitAuthUser(savedUser);
+    return cloneUser(savedUser);
+  },
 
-      if (!pending) {
-        return null;
-      }
+  // Mock-mode entry point. In production the AuthProvider triggers Enoki's
+  // OAuth redirect directly; this is a thin fallback used only when Firebase
+  // is disabled (local dev without env vars).
+  async signInWithGoogleMock(): Promise<User | null> {
+    if (firebaseEnabled) {
+      throw new Error('signInWithGoogleMock is only available in mock mode. Use the AuthProvider in production.');
+    }
+    const mockAddress = `0x${crypto.randomUUID().replace(/-/g, '')}`;
+    const fresh = buildFreshUserForAddress({ suiAddress: mockAddress });
+    writeLocalAuthUser(fresh);
+    emitAuthUser(fresh);
+    return cloneUser(fresh);
+  },
 
-      if (!firebaseEnabled || !auth) {
-        const user = buildMockUserProfile({
-          uid: crypto.randomUUID(),
-          email: pending.email,
-          displayName: pending.handle || pending.email.split('@')[0],
-          handle: sanitizeHandle(pending.handle || pending.email.split('@')[0]) || 'creator',
-        });
-        user.authProvider = 'password';
-        user.emailVerified = true;
-        writeLocalAuthUser(user);
-        writePendingEmailLink(null);
-        emitAuthUser(user);
-        return cloneUser(user);
-      }
-
-      if (!isSignInWithEmailLink(auth, currentUrl)) {
-        return null;
-      }
-
-      const credential = await signInWithEmailLink(auth, pending.email, currentUrl);
-      const existingUser = await getUserByUid(credential.user.uid);
-      const desiredHandle = existingUser?.handle || pending.handle || pending.email.split('@')[0];
-      const uniqueHandle = await ensureUniqueHandle(desiredHandle, credential.user.uid);
-      const user = await upsertUserProfile(
-        buildUserProfileFromAuthUser(credential.user, {
-          ...existingUser,
-          displayName: uniqueHandle,
-          handle: uniqueHandle,
-        }),
-      );
-
-      if (pending.mode === 'signup') {
-        await logAuthEvent({
-          userId: user.uid,
-          event: 'sign_up',
-          provider: 'password',
-          email: user.email,
-        });
-      }
-
-      await logAuthEvent({
-        userId: user.uid,
-        event: 'email_link_sign_in',
-        provider: 'password',
-        email: user.email,
-      });
-
-      writePendingEmailLink(null);
-      emitAuthUser(user);
-      return user;
-    },
-
-    async updateProfile(input: {
-      uid: string;
-      handle: string;
-      bio: string;
-      avatarUrl?: string;
-      links?: User['links'];
-    }): Promise<User> {
-      if (!input.uid) {
-        throw new Error('Missing user id.');
-      }
-
-      if (firebaseEnabled && auth?.currentUser?.uid !== input.uid) {
-        throw new Error('You can only edit your own profile.');
-      }
-
-      const existingUser = await getUserByUid(input.uid);
-      if (!existingUser) {
-        throw new Error('Profile not found.');
-      }
-
-      const normalizedHandle = sanitizeHandle(input.handle);
-      if (!normalizedHandle) {
-        throw new Error('Username must include letters, numbers, or underscores.');
-      }
-
-      if (await isHandleTakenByAnotherUser(normalizedHandle, input.uid)) {
-        throw new Error('Username taken. Choose another one.');
-      }
-
-      const nextUser: User = {
-        ...existingUser,
-        handle: normalizedHandle,
-        displayName: normalizedHandle,
-        bio: input.bio.trim(),
-        avatarUrl: input.avatarUrl ?? existingUser.avatarUrl,
-        links: input.links ?? existingUser.links,
-        updatedAt: new Date(),
-      };
-
-      const savedUser = await upsertUserProfile(nextUser);
-
-      const handleChanged = savedUser.handle !== existingUser.handle;
-      const avatarChanged = savedUser.avatarUrl !== existingUser.avatarUrl;
-
-      if (handleChanged || avatarChanged) {
-        await syncAuthorIdentityOnContent({
-          uid: savedUser.uid,
-          handle: handleChanged ? savedUser.handle : undefined,
-          avatarUrl: avatarChanged ? savedUser.avatarUrl : undefined,
-        });
-      }
-
-      writeLocalAuthUser(savedUser);
-      emitAuthUser(savedUser);
-      return cloneUser(savedUser);
-    },
-
-    async signInWithGoogle(): Promise<User | null> {
-      if (!firebaseEnabled || !auth) {
-        const user = buildMockUserProfile({
-          uid: crypto.randomUUID(),
-          email: 'google-user@mock.cuerate',
-          displayName: 'Google Creator',
-          handle: 'googlecreator',
-        });
-        user.authProvider = 'google';
-        user.emailVerified = true;
-        writeLocalAuthUser(user);
-        await logAuthEvent({
-          userId: user.uid,
-          event: 'google_sign_in',
-          provider: 'google',
-          email: user.email,
-        });
-        emitAuthUser(user);
-        return cloneUser(user);
-      }
-
-      const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(auth, provider);
-      const existingUser = await getUserByUid(credential.user.uid);
-      const uniqueHandle = await ensureUniqueHandle(
-        existingUser?.handle || credential.user.displayName || credential.user.email?.split('@')[0] || credential.user.uid,
-        credential.user.uid,
-      );
-      const user = await upsertUserProfile(
-        buildUserProfileFromAuthUser(credential.user, {
-          ...existingUser,
-          displayName: existingUser?.displayName || uniqueHandle,
-          handle: uniqueHandle,
-        }),
-      );
-      await logAuthEvent({
-        userId: user.uid,
-        event: 'google_sign_in',
-        provider: 'google',
-        email: user.email,
-      });
-      emitAuthUser(user);
-      return user;
-    },
-
-    async signOut(): Promise<void> {
-      if (!firebaseEnabled || !auth) {
-        const localAuthUser = readLocalAuthUser();
-        if (localAuthUser) {
-          await logAuthEvent({
-            userId: localAuthUser.uid,
-            event: 'sign_out',
-            provider: localAuthUser.authProvider ?? 'mock',
-            email: localAuthUser.email,
-          });
-        }
-        writeLocalAuthUser(null);
-        emitAuthUser(null);
-        return;
-      }
-
-      if (auth.currentUser) {
-        await logAuthEvent({
-          userId: auth.currentUser.uid,
-          event: 'sign_out',
-          provider: auth.currentUser.providerData.some((provider) => provider.providerId === 'google.com') ? 'google' : 'password',
-          email: auth.currentUser.email ?? undefined,
-        });
-      }
-      await signOut(auth);
-      emitAuthUser(null);
-    },
+  // Clears local cache. The real zkLogin session is cleared by EnokiFlow.logout()
+  // inside the AuthProvider.
+  async signOut(): Promise<void> {
+    writeLocalAuthUser(null);
+    emitAuthUser(null);
+  },
 
   subscribe(listener: (user: User | null) => void) {
     authListeners.add(listener);
 
-    if (!firebaseEnabled || !auth) {
-      listener(readLocalAuthUser());
+    listener(readLocalAuthUser());
 
-      const handleStorage = () => {
-        listener(readLocalAuthUser());
-      };
-
-      if (typeof window !== 'undefined') {
-        window.addEventListener('storage', handleStorage);
-      }
-
+    if (!firebaseEnabled && typeof window !== 'undefined') {
+      const handleStorage = () => listener(readLocalAuthUser());
+      window.addEventListener('storage', handleStorage);
       return () => {
         authListeners.delete(listener);
-        if (typeof window !== 'undefined') {
-          window.removeEventListener('storage', handleStorage);
-        }
+        window.removeEventListener('storage', handleStorage);
       };
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        listener(null);
-        return;
-      }
-
-      listener(await getUserByUid(firebaseUser.uid));
-    });
-
     return () => {
       authListeners.delete(listener);
-      unsubscribe();
     };
   },
 };
 
 export const backendStatus = {
   firebaseEnabled,
-  supabaseConfigured: isSupabaseConfigured,
+  walrusConfigured: isWalrusConfigured,
+  walrusNetwork: walrusConfig.network,
 };
 
 export const metaApi = {
@@ -1497,33 +1225,17 @@ export const promptsApi = {
       throw new Error('Only the author can delete this prompt.');
     }
 
-    const mediaPaths = new Set<string>();
-    const videoPath = extractSupabaseStoragePathFromPublicUrl(promptData.videoUrl);
-    const thumbnailPath = extractSupabaseStoragePathFromPublicUrl(promptData.thumbnailUrl);
-    if (videoPath) {
-      mediaPaths.add(videoPath);
-    }
-    if (thumbnailPath) {
-      mediaPaths.add(thumbnailPath);
-    }
+    // Walrus blobs are immutable and content-addressed; they expire when their
+    // paid epochs lapse. Removing the Firestore record is sufficient — there
+    // is no client-side delete call to make. We log the orphaned blob ids for
+    // visibility / future cleanup via owned Sui blob objects.
+    const orphanedBlobIds = [
+      extractWalrusBlobIdFromUrlSafe(promptData.videoUrl),
+      extractWalrusBlobIdFromUrlSafe(promptData.thumbnailUrl),
+    ].filter((entry): entry is string => Boolean(entry));
 
-    if (mediaPaths.size > 0) {
-      if (!isSupabaseConfigured || !supabase) {
-        throw new Error('Supabase Storage is required to delete prompt media.');
-      }
-
-      const { error: storageDeleteError } = await supabase.storage
-        .from(SUPABASE_BUCKET)
-        .remove(Array.from(mediaPaths));
-
-      if (storageDeleteError) {
-        if (/row-level security/i.test(storageDeleteError.message)) {
-          throw new Error(
-            `Supabase Storage policy blocked prompt media deletion for bucket "${SUPABASE_BUCKET}". Add DELETE policies for this bucket.`,
-          );
-        }
-        throw new Error(storageDeleteError.message || 'Could not delete prompt media from Supabase Storage.');
-      }
+    if (orphanedBlobIds.length > 0) {
+      console.info('[walrus] orphaned blob ids after prompt delete', orphanedBlobIds);
     }
 
     const [likeSnapshots, saveSnapshots, copySnapshots] = await Promise.all([
@@ -2058,131 +1770,63 @@ export const collectionsApi = {
   },
 };
 
+// Media uploads are routed to Walrus (https://docs.wal.app). The publisher
+// returns a content-addressed `blobId`; the aggregator URL built from it is
+// what we persist in Firestore (Prompt.videoUrl, User.avatarUrl, etc.) so the
+// existing UI consumers (<img>, <video>) keep working unchanged.
+//
+// The return shape preserves `downloadUrl` for backward compatibility and adds
+// `blobId` + `size` so future batches (Move attribution, marketplace) can
+// anchor the blob onchain without re-uploading.
 export const uploadsApi = {
-  async uploadPromptMedia(file: File, userId: string) {
-    // Supabase buckets are the single media storage backend.
-    if (!isSupabaseConfigured || !supabase) {
+  async uploadPromptMedia(file: File, _userId: string) {
+    if (!isWalrusConfigured) {
       throw new Error(
-        'Supabase Storage is required for media uploads. Set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and VITE_SUPABASE_BUCKET.',
+        'Walrus is not configured. Set VITE_WALRUS_NETWORK (testnet | mainnet) — see walrus-integration-guide.md.',
       );
     }
 
-    const fileName = `${Date.now()}-${file.name}`;
-    const filePath = `prompts/${userId}/${fileName}`;
-
-    try {
-      const { data: _data, error } = await supabase.storage
-        .from(SUPABASE_BUCKET)
-        .upload(filePath, file, {
-          upsert: false,
-          contentType: file.type || undefined,
-        });
-
-      if (error) {
-        if (/row-level security/i.test(error.message)) {
-          throw new Error(
-            `Supabase Storage policy blocked the upload for bucket "${SUPABASE_BUCKET}". Add least-privilege INSERT policy for allowed paths (and avoid broad SELECT/list policies).`,
-          );
-        }
-        console.error('Supabase upload error:', error);
-        throw error;
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (/failed to fetch/i.test(message)) {
-        throw new Error(
-          `Upload could not reach Supabase (${SUPABASE_URL}). Check internet/VPN, disable ad blockers for localhost, and confirm the Supabase project is active.`,
-        );
-      }
-      throw error;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(SUPABASE_BUCKET)
-      .getPublicUrl(filePath);
-
+    const result = await walrusPublishBlob(file);
     return {
-      path: filePath,
-      downloadUrl: publicUrl,
+      path: result.blobId,
+      downloadUrl: result.url,
+      blobId: result.blobId,
+      blobObjectId: result.blobObjectId,
+      size: result.size,
     };
   },
 
-  async uploadProfileAvatar(file: File, userId: string) {
-    if (!isSupabaseConfigured || !supabase) {
+  async uploadProfileAvatar(file: File, _userId: string) {
+    if (!isWalrusConfigured) {
       throw new Error(
-        'Supabase Storage is required for media uploads. Set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and VITE_SUPABASE_BUCKET.',
+        'Walrus is not configured. Set VITE_WALRUS_NETWORK (testnet | mainnet) — see walrus-integration-guide.md.',
       );
     }
 
-    const fileName = `${Date.now()}-${file.name}`;
-    const filePath = `avatars/${userId}/${fileName}`;
-
-    try {
-      const { data: _data, error } = await supabase.storage
-        .from(SUPABASE_BUCKET)
-        .upload(filePath, file, {
-          upsert: false,
-          contentType: file.type || undefined,
-        });
-
-      if (error) {
-        if (/row-level security/i.test(error.message)) {
-          throw new Error(
-            `Supabase Storage policy blocked the upload for bucket "${SUPABASE_BUCKET}". Add least-privilege INSERT policy for allowed paths (and avoid broad SELECT/list policies).`,
-          );
-        }
-        throw error;
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (/failed to fetch/i.test(message)) {
-        throw new Error(
-          `Upload could not reach Supabase (${SUPABASE_URL}). Check internet/VPN, disable ad blockers for localhost, and confirm the Supabase project is active.`,
-        );
-      }
-      throw error;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(SUPABASE_BUCKET)
-      .getPublicUrl(filePath);
-
+    const result = await walrusPublishBlob(file);
     return {
-      path: filePath,
-      downloadUrl: publicUrl,
+      path: result.blobId,
+      downloadUrl: result.url,
+      blobId: result.blobId,
+      blobObjectId: result.blobObjectId,
+      size: result.size,
     };
   },
 
+  // Walrus blobs are immutable from the client and expire on their own when
+  // their paid epochs lapse. This is intentionally a no-op that just logs the
+  // orphaned blob ids, so callers don't need conditional logic.
   async deletePublicMediaUrls(urls: Array<string | null | undefined>) {
-    const storagePaths = Array.from(
+    const blobIds = Array.from(
       new Set(
         urls
-          .map((entry) => extractSupabaseStoragePathFromPublicUrl(entry))
+          .map((entry) => extractWalrusBlobIdFromUrl(entry))
           .filter((entry): entry is string => Boolean(entry)),
       ),
     );
 
-    if (storagePaths.length === 0) {
-      return;
-    }
-
-    if (!isSupabaseConfigured || !supabase) {
-      throw new Error(
-        'Supabase Storage is required for media deletion. Set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and VITE_SUPABASE_BUCKET.',
-      );
-    }
-
-    const { error } = await supabase.storage
-      .from(SUPABASE_BUCKET)
-      .remove(storagePaths);
-
-    if (error) {
-      if (/row-level security/i.test(error.message)) {
-        throw new Error(
-          `Supabase Storage policy blocked media deletion for bucket "${SUPABASE_BUCKET}". Add DELETE policies for this bucket.`,
-        );
-      }
-      throw new Error(error.message || 'Could not delete media from Supabase Storage.');
+    if (blobIds.length > 0) {
+      console.info('[walrus] orphaned blob ids (immutable, will expire on epoch lapse)', blobIds);
     }
   },
 };

@@ -1,8 +1,11 @@
+// Firebase is now ONLY used for Firestore (the social/data layer).
+// Authentication is handled entirely by Enoki zkLogin \u2014 see src/lib/sui.ts
+// and the AuthProvider in src/lib/auth-context.tsx. Storage is handled by
+// Walrus \u2014 see src/lib/walrus.ts. The user's identity in Firestore is their
+// Sui address; there is no Firebase Auth user layer.
+
 import { FirebaseApp, FirebaseOptions, getApp, getApps, initializeApp } from 'firebase/app';
-import { Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, Firestore, getFirestore } from 'firebase/firestore';
-import { FirebaseStorage, getStorage } from 'firebase/storage';
-import { connectStorageEmulator } from 'firebase/storage';
 
 type FirebaseEnv = Record<string, string | undefined>;
 
@@ -27,14 +30,9 @@ export const firebaseConfig: FirebaseOptions = {
 
 const firebaseCoreConfig = [
   firebaseConfig.apiKey,
-  firebaseConfig.authDomain,
   firebaseConfig.projectId,
   firebaseConfig.appId,
 ];
-
-const firebaseStorageConfigured =
-  typeof firebaseConfig.storageBucket === 'string' &&
-  firebaseConfig.storageBucket.trim().length > 0;
 
 export const firebaseEnabled = firebaseCoreConfig.every(
   (value) => typeof value === 'string' && value.trim().length > 0,
@@ -44,19 +42,12 @@ export const app: FirebaseApp | null = firebaseEnabled
   ? (getApps().length ? getApp() : initializeApp(firebaseConfig))
   : null;
 
-export const auth: Auth | null = app ? getAuth(app) : null;
 export const db: Firestore | null = app ? getFirestore(app) : null;
-export const storage: FirebaseStorage | null =
-  app && firebaseStorageConfigured ? getStorage(app) : null;
 
-const useEmulators =
-  Boolean(app) &&
-  readBooleanEnv('VITE_USE_FIREBASE_EMULATORS');
+const useEmulators = Boolean(app) && readBooleanEnv('VITE_USE_FIREBASE_EMULATORS');
 
-if (useEmulators && auth && db && storage) {
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+if (useEmulators && db) {
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
-  connectStorageEmulator(storage, '127.0.0.1', 9199);
 }
 
 export default app;

@@ -1,9 +1,10 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Bookmark, Camera, Globe, Instagram, Loader2, LogOut, Trash2, Twitter, X, Youtube } from 'lucide-react';
+import { Bookmark, Camera, Copy, Globe, Instagram, Loader2, LogOut, Trash2, Twitter, Wallet, X, Youtube } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { authApi, followsApi, promptsApi, uploadsApi, workflowsApi } from '../../lib/backend';
 import { useBackendQuery } from '../../lib/useBackendQuery';
 import { useAuth } from '../../lib/auth-context';
+import { shortenSuiAddress } from '../../lib/sui';
 import { truncateText } from '../../lib/text';
 import { Prompt, Workflow } from '../../lib/types';
 
@@ -319,6 +320,20 @@ export function MyProfile() {
             <h2 className="max-w-[280px] truncate font-primary font-bold text-xl text-[var(--cuerate-text-1)] mb-1" title={`@${profile.handle}`}>
               @{displayHandle}
             </h2>
+            {profile.suiAddress && (
+              <button
+                onClick={() => {
+                  void navigator.clipboard?.writeText(profile.suiAddress ?? '');
+                }}
+                className="mb-3 inline-flex items-center gap-2 rounded-[var(--cuerate-r-pill)] glass-surface border border-[var(--cuerate-indigo)]/40 px-3 py-1.5 font-accent text-xs text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                title={`Sui address: ${profile.suiAddress}`}
+                aria-label="Copy Sui address"
+              >
+                <Wallet className="w-3.5 h-3.5 text-[var(--cuerate-indigo)]" />
+                <span className="font-mono">{shortenSuiAddress(profile.suiAddress)}</span>
+                <Copy className="w-3 h-3 text-[var(--cuerate-text-2)]" />
+              </button>
+            )}
             <p className="font-accent text-sm text-[var(--cuerate-text-1)] mb-3 max-w-xs">
               {profile.bio || 'No profile bio yet.'}
             </p>

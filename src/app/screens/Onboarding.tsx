@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Check } from 'lucide-react';
-import { followsApi, metaApi, usersApi } from '../../lib/backend';
+import { authApi, followsApi, metaApi, usersApi } from '../../lib/backend';
 import { useBackendQuery } from '../../lib/useBackendQuery';
 import { useAuth } from '../../lib/auth-context';
 import { truncateText } from '../../lib/text';
@@ -83,12 +83,29 @@ export function Onboarding() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (step < 3) {
       setStep((step + 1) as Step);
-    } else {
-      navigate('/');
+      return;
     }
+
+    if (activeUser) {
+      try {
+        await authApi.updateProfile({
+          uid: activeUser.uid,
+          handle: activeUser.handle,
+          bio: activeUser.bio,
+          avatarUrl: activeUser.avatarUrl,
+          links: activeUser.links,
+          primaryModels: selectedModels.length > 0 ? selectedModels : activeUser.primaryModels,
+          hasOnboarded: true,
+        });
+      } catch (error) {
+        console.error('Could not save onboarding progress:', error);
+      }
+    }
+
+    navigate('/');
   };
 
   return (

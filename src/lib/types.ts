@@ -6,13 +6,22 @@ export interface UserLinks {
 }
 
 export interface User {
+  // The user's Sui address, derived via zkLogin from their Google OAuth
+  // identity. This IS the user's primary identity in Cuerate \u2014 there is no
+  // separate Firebase uid layer. Sui addresses are lowercase, 66 chars
+  // (0x + 64 hex). The Firestore doc id matches this exactly.
   uid: string;
+  // Same as `uid` for users created via zkLogin. Kept as a distinct field for
+  // readability in code that specifically signals onchain identity (tipping,
+  // attribution, etc.). Optional only because mock-data users have no Sui
+  // address; every real user from Firestore has it populated.
+  suiAddress?: string;
   handle: string;
   displayName: string;
   avatarUrl: string;
+  // Optional email, populated from the Google id_token on first sign-in.
+  // Never used for auth or recovery \u2014 just for display / outreach.
   email?: string;
-  emailVerified?: boolean;
-  authProvider?: 'password' | 'google' | 'mock';
   bio: string;
   links: UserLinks;
   primaryModels: string[];
@@ -20,6 +29,8 @@ export interface User {
   following: number;
   totalCopies: number;
   totalPrompts: number;
+  // False until the user finishes the onboarding flow (picks handle, AI tools, follows).
+  hasOnboarded?: boolean;
   createdAt: Date;
   updatedAt?: Date;
   lastLoginAt?: Date;
@@ -155,23 +166,6 @@ export interface Collection {
   description?: string;
   count: number;
   thumbnails: string[];
-  createdAt: Date;
-}
-
-export type AuthLogEvent =
-  | 'sign_up'
-  | 'sign_in'
-  | 'sign_out'
-  | 'google_sign_in'
-  | 'email_link_sent'
-  | 'email_link_sign_in';
-
-export interface AuthLog {
-  id: string;
-  userId: string;
-  event: AuthLogEvent;
-  provider: 'password' | 'google' | 'mock';
-  email?: string;
   createdAt: Date;
 }
 
