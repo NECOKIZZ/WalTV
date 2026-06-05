@@ -5,3 +5,5 @@ dist/
 firebase-debug.log
 npm-debug.log*
 service-account.json
+# Move build artifacts
+move/**/build/

@@ -1,0 +1,9 @@
+[package]
+name = "cuerate_attribution"
+edition = "2024.beta"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+
+[addresses]
+cuerate_attribution = "0x0"

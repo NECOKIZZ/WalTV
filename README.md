@@ -12,13 +12,30 @@
   ## Firebase Setup
 
   Copy `.env.example` to `.env` and fill in your Firebase web app values.
-  Also set Supabase vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_BUCKET`) because media uploads use Supabase Storage buckets.
+  Also set Sui/Enoki and Walrus vars because auth now uses zkLogin and media uploads use Walrus.
 
-  The app now reads through `src/lib/backend.ts`, which uses Firebase when env vars are present and falls back to local stubs/mock data when they are not.
+  The app now reads through `src/lib/backend.ts`, which uses Firebase Firestore when env vars are present and falls back to local stubs/mock data when they are not.
 
   Firebase config scaffolding is included in `firebase.json`, `firestore.rules`, `firestore.indexes.json`, and `storage.rules`.
 
-  Authentication is wired through the `/auth` route and the shared auth provider in `src/lib/auth-context.tsx`.
+  Authentication is wired through the `/auth` route and the shared auth provider in `src/lib/auth-context.tsx`. For the hackathon fork, Firebase Auth is not used; Firestore documents are keyed by the user's zkLogin-derived Sui address.
+
+  Important: the included Firestore rules are hackathon/demo rules for a client-only Enoki app. They make the current Sui-address flow work without Firebase Auth, but production should verify zkLogin signatures server-side or mint Firebase custom tokens before allowing protected writes.
+
+  ## Move Attribution
+
+  The hackathon fork includes a Sui Move package at `move/cuerate_attribution`.
+  Publish it, then set `VITE_CUERATE_ATTRIBUTION_PACKAGE_ID` in `.env`.
+  When configured, prompt creation and prompt forks best-effort write an
+  `AttributionRecord` on Sui and store the resulting object id/digest back on
+  the Firestore prompt document.
+
+  ## Sui Paid Likes
+
+  Paid likes can send a tiny SUI payment to the prompt creator before the app
+  records the like. Configure the amount with `VITE_SUI_PAID_LIKE_MIST`
+  (`1000000` MIST = `0.001` SUI) and toggle the feature with
+  `VITE_ENABLE_SUI_PAID_LIKES`.
 
   ## Firebase Commands
 

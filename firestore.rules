@@ -1,19 +1,76 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
+    /*
+      Cuerate Sui hackathon rules
+
+      The app no longer signs users in with Firebase Auth. Identity comes from
+      Enoki zkLogin, and real users are keyed by their Sui address. That means
+      request.auth is normally null for the browser Firestore SDK.
+
+      These rules intentionally keep Firebase as the offchain social/index
+      layer for the hackathon demo. They validate Sui-address-shaped authorship
+      and preserve the existing public social graph behavior, but they are not
+      strong impersonation protection. For production, put writes behind a
+      backend that verifies zkLogin signatures or mint Firebase custom tokens
+      after verifying the Sui address server-side.
+    */
+
+    function isFirebaseSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isFirebaseOwner(userId) {
+      return isFirebaseSignedIn() && request.auth.uid == userId;
     }
 
-    function isPromptLikeCounterUpdate(promptId) {
-      return isSignedIn()
-        && request.resource.data.authorUid == resource.data.authorUid
-        && request.resource.data.authorHandle == resource.data.authorHandle
-        && request.resource.data.authorAvatar == resource.data.authorAvatar
+    function isSuiAddress(value) {
+      return value is string && value.matches('^0x[0-9a-fA-F]{64}$');
+    }
+
+    function isAppUserId(value) {
+      return isSuiAddress(value) || isFirebaseOwner(value);
+    }
+
+    function isPublicUserProfile(userId) {
+      return request.resource.data.uid == userId
+        && request.resource.data.suiAddress == userId
+        && isAppUserId(userId)
+        && request.resource.data.handle is string
+        && request.resource.data.displayName is string
+        && request.resource.data.avatarUrl is string
+        && request.resource.data.bio is string
+        && request.resource.data.primaryModels is list
+        && request.resource.data.followers is number
+        && request.resource.data.following is number
+        && request.resource.data.totalCopies is number
+        && request.resource.data.totalPrompts is number;
+    }
+
+    function isPromptDocument(data) {
+      return isAppUserId(data.authorUid)
+        && data.authorHandle is string
+        && data.authorAvatar is string
+        && data.videoUrl is string
+        && data.thumbnailUrl is string
+        && data.promptText is string
+        && data.model is string
+        && data.contentType in ['image', 'video']
+        && data.aspectRatio in ['portrait', 'landscape']
+        && data.styleTags is list
+        && data.cameraNotes is string
+        && data.moodLabel is string
+        && data.difficulty is string
+        && data.likes is number
+        && data.saves is number
+        && data.copies is number
+        && data.forks is number
+        && data.isForked is bool
+        && data.createdAt is timestamp;
+    }
+
+    function promptIdentityUnchanged() {
+      return request.resource.data.authorUid == resource.data.authorUid
         && request.resource.data.videoUrl == resource.data.videoUrl
         && request.resource.data.thumbnailUrl == resource.data.thumbnailUrl
         && request.resource.data.promptText == resource.data.promptText
@@ -24,342 +81,261 @@ service cloud.firestore {
         && request.resource.data.cameraNotes == resource.data.cameraNotes
         && request.resource.data.moodLabel == resource.data.moodLabel
         && request.resource.data.difficulty == resource.data.difficulty
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function isPromptCounterUpdate() {
+      return promptIdentityUnchanged()
+        && request.resource.data.authorHandle == resource.data.authorHandle
+        && request.resource.data.authorAvatar == resource.data.authorAvatar
+        && request.resource.data.isForked == resource.data.isForked
+        && request.resource.data.forkedFromId == resource.data.forkedFromId
+        && request.resource.data.forkedFromAuthorHandle == resource.data.forkedFromAuthorHandle
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['likes', 'saves', 'copies'])
+        && request.resource.data.likes >= 0
+        && request.resource.data.saves >= 0
+        && request.resource.data.copies >= 0
+        && (
+          request.resource.data.likes == resource.data.likes
+          || request.resource.data.likes == resource.data.likes + 1
+          || request.resource.data.likes == resource.data.likes - 1
+        )
+        && (
+          request.resource.data.saves == resource.data.saves
+          || request.resource.data.saves == resource.data.saves + 1
+          || request.resource.data.saves == resource.data.saves - 1
+        )
+        && (
+          request.resource.data.copies == resource.data.copies
+          || request.resource.data.copies == resource.data.copies + 1
+        );
+    }
+
+    function isPromptAuthorIdentitySyncUpdate() {
+      return promptIdentityUnchanged()
+        && request.resource.data.likes == resource.data.likes
         && request.resource.data.saves == resource.data.saves
         && request.resource.data.copies == resource.data.copies
         && request.resource.data.forks == resource.data.forks
         && request.resource.data.isForked == resource.data.isForked
         && request.resource.data.forkedFromId == resource.data.forkedFromId
         && request.resource.data.forkedFromAuthorHandle == resource.data.forkedFromAuthorHandle
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.mediaWidth == resource.data.mediaWidth
-        && request.resource.data.mediaHeight == resource.data.mediaHeight
-        && (
-          (
-            request.resource.data.likes == resource.data.likes + 1
-            && !exists(/databases/$(database)/documents/promptLikes/$(promptId + "_" + request.auth.uid))
-            && existsAfter(/databases/$(database)/documents/promptLikes/$(promptId + "_" + request.auth.uid))
-          )
-          || (
-            request.resource.data.likes == resource.data.likes - 1
-            && exists(/databases/$(database)/documents/promptLikes/$(promptId + "_" + request.auth.uid))
-            && !existsAfter(/databases/$(database)/documents/promptLikes/$(promptId + "_" + request.auth.uid))
-          )
-        );
-    }
-
-    function isPromptSaveCounterUpdate(promptId) {
-      return isSignedIn()
-        && request.resource.data.authorUid == resource.data.authorUid
-        && request.resource.data.authorHandle == resource.data.authorHandle
-        && request.resource.data.authorAvatar == resource.data.authorAvatar
-        && request.resource.data.videoUrl == resource.data.videoUrl
-        && request.resource.data.thumbnailUrl == resource.data.thumbnailUrl
-        && request.resource.data.promptText == resource.data.promptText
-        && request.resource.data.model == resource.data.model
-        && request.resource.data.contentType == resource.data.contentType
-        && request.resource.data.aspectRatio == resource.data.aspectRatio
-        && request.resource.data.styleTags == resource.data.styleTags
-        && request.resource.data.cameraNotes == resource.data.cameraNotes
-        && request.resource.data.moodLabel == resource.data.moodLabel
-        && request.resource.data.difficulty == resource.data.difficulty
-        && request.resource.data.likes == resource.data.likes
-        && request.resource.data.copies == resource.data.copies
-        && request.resource.data.forks == resource.data.forks
-        && request.resource.data.isForked == resource.data.isForked
-        && request.resource.data.forkedFromId == resource.data.forkedFromId
-        && request.resource.data.forkedFromAuthorHandle == resource.data.forkedFromAuthorHandle
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.mediaWidth == resource.data.mediaWidth
-        && request.resource.data.mediaHeight == resource.data.mediaHeight
-        && (
-          (
-            request.resource.data.saves == resource.data.saves + 1
-            && !exists(/databases/$(database)/documents/promptSaves/$(promptId + "_" + request.auth.uid))
-            && existsAfter(/databases/$(database)/documents/promptSaves/$(promptId + "_" + request.auth.uid))
-          )
-          || (
-            request.resource.data.saves == resource.data.saves - 1
-            && exists(/databases/$(database)/documents/promptSaves/$(promptId + "_" + request.auth.uid))
-            && !existsAfter(/databases/$(database)/documents/promptSaves/$(promptId + "_" + request.auth.uid))
-          )
-        );
-    }
-
-    function isPromptCopyCounterUpdate(promptId) {
-      return isSignedIn()
-        && request.resource.data.authorUid == resource.data.authorUid
-        && request.resource.data.authorHandle == resource.data.authorHandle
-        && request.resource.data.authorAvatar == resource.data.authorAvatar
-        && request.resource.data.videoUrl == resource.data.videoUrl
-        && request.resource.data.thumbnailUrl == resource.data.thumbnailUrl
-        && request.resource.data.promptText == resource.data.promptText
-        && request.resource.data.model == resource.data.model
-        && request.resource.data.contentType == resource.data.contentType
-        && request.resource.data.aspectRatio == resource.data.aspectRatio
-        && request.resource.data.styleTags == resource.data.styleTags
-        && request.resource.data.cameraNotes == resource.data.cameraNotes
-        && request.resource.data.moodLabel == resource.data.moodLabel
-        && request.resource.data.difficulty == resource.data.difficulty
-        && request.resource.data.likes == resource.data.likes
-        && request.resource.data.saves == resource.data.saves
-        && request.resource.data.forks == resource.data.forks
-        && request.resource.data.isForked == resource.data.isForked
-        && request.resource.data.forkedFromId == resource.data.forkedFromId
-        && request.resource.data.forkedFromAuthorHandle == resource.data.forkedFromAuthorHandle
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.mediaWidth == resource.data.mediaWidth
-        && request.resource.data.mediaHeight == resource.data.mediaHeight
-        && request.resource.data.copies == resource.data.copies + 1
-        && !exists(/databases/$(database)/documents/promptCopies/$(promptId + "_" + request.auth.uid))
-        && existsAfter(/databases/$(database)/documents/promptCopies/$(promptId + "_" + request.auth.uid));
-    }
-
-    function isPromptAuthor(promptId) {
-      return isSignedIn()
-        && get(/databases/$(database)/documents/prompts/$(promptId)).data.authorUid == request.auth.uid;
-    }
-
-    function isPromptAuthorIdentitySyncUpdate(promptId) {
-      return isSignedIn()
-        && resource.data.authorUid == request.auth.uid
         && request.resource.data.diff(resource.data).changedKeys().hasOnly(['authorHandle', 'authorAvatar'])
-        && request.resource.data.authorUid == resource.data.authorUid
         && request.resource.data.authorHandle is string
         && request.resource.data.authorAvatar is string;
     }
 
-    function isPromptForkMetadataUpdate(promptId) {
-      return isSignedIn()
-        && resource.data.authorUid == request.auth.uid
+    function isPromptForkMetadataUpdate() {
+      return promptIdentityUnchanged()
+        && request.resource.data.authorHandle == resource.data.authorHandle
+        && request.resource.data.authorAvatar == resource.data.authorAvatar
+        && request.resource.data.likes == resource.data.likes
+        && request.resource.data.saves == resource.data.saves
+        && request.resource.data.copies == resource.data.copies
+        && request.resource.data.forks == resource.data.forks
         && request.resource.data.diff(resource.data).changedKeys().hasOnly(['isForked', 'forkedFromId', 'forkedFromAuthorHandle'])
         && request.resource.data.isForked == true
         && request.resource.data.forkedFromId is string
         && request.resource.data.forkedFromAuthorHandle is string;
     }
 
-    function isWorkflowLikeCounterUpdate(workflowId) {
-      return isSignedIn()
-        && request.resource.data.authorUid == resource.data.authorUid
+    function isPromptAttributionMetadataUpdate() {
+      return promptIdentityUnchanged()
         && request.resource.data.authorHandle == resource.data.authorHandle
         && request.resource.data.authorAvatar == resource.data.authorAvatar
-        && request.resource.data.title == resource.data.title
-        && request.resource.data.tool == resource.data.tool
-        && request.resource.data.description == resource.data.description
-        && request.resource.data.coverVideoUrl == resource.data.coverVideoUrl
-        && request.resource.data.coverThumbnailUrl == resource.data.coverThumbnailUrl
-        && request.resource.data.tags == resource.data.tags
-        && request.resource.data.stepCount == resource.data.stepCount
-        && request.resource.data.mediaAspectRatio == resource.data.mediaAspectRatio
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.steps == resource.data.steps
-        && request.resource.data.saves == resource.data.saves
-        && (
-          (
-            request.resource.data.likes == resource.data.likes + 1
-            && !exists(/databases/$(database)/documents/workflowLikes/$(workflowId + "_" + request.auth.uid))
-            && existsAfter(/databases/$(database)/documents/workflowLikes/$(workflowId + "_" + request.auth.uid))
-          )
-          || (
-            request.resource.data.likes == resource.data.likes - 1
-            && exists(/databases/$(database)/documents/workflowLikes/$(workflowId + "_" + request.auth.uid))
-            && !existsAfter(/databases/$(database)/documents/workflowLikes/$(workflowId + "_" + request.auth.uid))
-          )
-        );
-    }
-
-    function isWorkflowSaveCounterUpdate(workflowId) {
-      return isSignedIn()
-        && request.resource.data.authorUid == resource.data.authorUid
-        && request.resource.data.authorHandle == resource.data.authorHandle
-        && request.resource.data.authorAvatar == resource.data.authorAvatar
-        && request.resource.data.title == resource.data.title
-        && request.resource.data.tool == resource.data.tool
-        && request.resource.data.description == resource.data.description
-        && request.resource.data.coverVideoUrl == resource.data.coverVideoUrl
-        && request.resource.data.coverThumbnailUrl == resource.data.coverThumbnailUrl
-        && request.resource.data.tags == resource.data.tags
-        && request.resource.data.stepCount == resource.data.stepCount
-        && request.resource.data.mediaAspectRatio == resource.data.mediaAspectRatio
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.steps == resource.data.steps
         && request.resource.data.likes == resource.data.likes
+        && request.resource.data.saves == resource.data.saves
+        && request.resource.data.copies == resource.data.copies
+        && request.resource.data.forks == resource.data.forks
+        && request.resource.data.isForked == resource.data.isForked
+        && request.resource.data.forkedFromId == resource.data.forkedFromId
+        && request.resource.data.forkedFromAuthorHandle == resource.data.forkedFromAuthorHandle
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'onchainAttributionId',
+          'onchainAttributionTxDigest',
+          'walrusContentBlobId',
+          'walrusMetadataBlobId'
+        ]);
+    }
+
+    function isWorkflowDocument(data) {
+      return isAppUserId(data.authorUid)
+        && data.authorHandle is string
+        && data.authorAvatar is string
+        && data.title is string
+        && data.tool is string
+        && data.description is string
+        && data.coverVideoUrl is string
+        && data.coverThumbnailUrl is string
+        && data.tags is list
+        && data.stepCount is number
+        && data.likes is number
+        && data.saves is number
+        && data.mediaAspectRatio in ['portrait', 'landscape']
+        && data.createdAt is timestamp
+        && data.steps is list;
+    }
+
+    function workflowIdentityUnchanged() {
+      return request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.title == resource.data.title
+        && request.resource.data.tool == resource.data.tool
+        && request.resource.data.description == resource.data.description
+        && request.resource.data.coverVideoUrl == resource.data.coverVideoUrl
+        && request.resource.data.coverThumbnailUrl == resource.data.coverThumbnailUrl
+        && request.resource.data.tags == resource.data.tags
+        && request.resource.data.stepCount == resource.data.stepCount
+        && request.resource.data.mediaAspectRatio == resource.data.mediaAspectRatio
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.steps == resource.data.steps;
+    }
+
+    function isWorkflowCounterUpdate() {
+      return workflowIdentityUnchanged()
+        && request.resource.data.authorHandle == resource.data.authorHandle
+        && request.resource.data.authorAvatar == resource.data.authorAvatar
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['likes', 'saves'])
+        && request.resource.data.likes >= 0
+        && request.resource.data.saves >= 0
         && (
-          (
-            request.resource.data.saves == resource.data.saves + 1
-            && !exists(/databases/$(database)/documents/workflowSaves/$(workflowId + "_" + request.auth.uid))
-            && existsAfter(/databases/$(database)/documents/workflowSaves/$(workflowId + "_" + request.auth.uid))
-          )
-          || (
-            request.resource.data.saves == resource.data.saves - 1
-            && exists(/databases/$(database)/documents/workflowSaves/$(workflowId + "_" + request.auth.uid))
-            && !existsAfter(/databases/$(database)/documents/workflowSaves/$(workflowId + "_" + request.auth.uid))
-          )
+          request.resource.data.likes == resource.data.likes
+          || request.resource.data.likes == resource.data.likes + 1
+          || request.resource.data.likes == resource.data.likes - 1
+        )
+        && (
+          request.resource.data.saves == resource.data.saves
+          || request.resource.data.saves == resource.data.saves + 1
+          || request.resource.data.saves == resource.data.saves - 1
         );
     }
 
-    function isWorkflowAuthor(workflowId) {
-      return isSignedIn()
-        && get(/databases/$(database)/documents/workflows/$(workflowId)).data.authorUid == request.auth.uid;
-    }
-
-    function isWorkflowAuthorIdentitySyncUpdate(workflowId) {
-      return isSignedIn()
-        && resource.data.authorUid == request.auth.uid
+    function isWorkflowAuthorIdentitySyncUpdate() {
+      return workflowIdentityUnchanged()
+        && request.resource.data.likes == resource.data.likes
+        && request.resource.data.saves == resource.data.saves
         && request.resource.data.diff(resource.data).changedKeys().hasOnly(['authorHandle', 'authorAvatar'])
-        && request.resource.data.authorUid == resource.data.authorUid
         && request.resource.data.authorHandle is string
         && request.resource.data.authorAvatar is string;
     }
 
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if isOwner(userId);
+      allow create, update: if isPublicUserProfile(userId);
     }
 
     match /usersPrivate/{userId} {
-      allow read, create, update: if isOwner(userId);
+      allow read, create, update: if isFirebaseOwner(userId);
     }
 
     match /authLogs/{logId} {
-      allow create: if 
-        (isSignedIn() && request.resource.data.userId == request.auth.uid) ||
-        (request.resource.data.event == 'email_link_sent');
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if true;
+      allow read: if false;
     }
 
     match /emailLookup/{emailId} {
-      allow read: if false;
-      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, create, update: if false;
     }
 
     match /prompts/{promptId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.authorUid == request.auth.uid;
-      allow update: if isSignedIn()
+      allow create: if isPromptDocument(request.resource.data);
+      allow update: if isPromptDocument(request.resource.data)
         && (
-          isPromptLikeCounterUpdate(promptId)
-          || isPromptSaveCounterUpdate(promptId)
-          || isPromptCopyCounterUpdate(promptId)
-          || isPromptAuthorIdentitySyncUpdate(promptId)
-          || isPromptForkMetadataUpdate(promptId)
+          isPromptCounterUpdate()
+          || isPromptAuthorIdentitySyncUpdate()
+          || isPromptForkMetadataUpdate()
+          || isPromptAttributionMetadataUpdate()
         );
-      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow delete: if isAppUserId(resource.data.authorUid);
     }
 
     match /workflows/{workflowId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.authorUid == request.auth.uid;
-      allow update: if isSignedIn()
+      allow create: if isWorkflowDocument(request.resource.data);
+      allow update: if isWorkflowDocument(request.resource.data)
         && (
-          isWorkflowLikeCounterUpdate(workflowId)
-          || isWorkflowSaveCounterUpdate(workflowId)
-          || isWorkflowAuthorIdentitySyncUpdate(workflowId)
+          isWorkflowCounterUpdate()
+          || isWorkflowAuthorIdentitySyncUpdate()
         );
-      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow delete: if isAppUserId(resource.data.authorUid);
     }
 
     match /promptLikes/{likeId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isSignedIn() && (
-        resource == null
-        || resource.data.userId == request.auth.uid
-        || isPromptAuthor(resource.data.promptId)
-      );
-      allow delete: if isSignedIn() && (
-        resource.data.userId == request.auth.uid
-        || isPromptAuthor(resource.data.promptId)
-      );
+      allow read: if true;
+      allow create: if isAppUserId(request.resource.data.userId)
+        && request.resource.data.promptId is string;
+      allow delete: if true;
     }
 
     match /promptSaves/{saveId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isSignedIn() && (
-        resource == null
-        || resource.data.userId == request.auth.uid
-        || isPromptAuthor(resource.data.promptId)
-      );
-      allow delete: if isSignedIn() && (
-        resource.data.userId == request.auth.uid
-        || isPromptAuthor(resource.data.promptId)
-      );
+      allow read: if true;
+      allow create: if isAppUserId(request.resource.data.userId)
+        && request.resource.data.promptId is string;
+      allow delete: if true;
     }
 
     match /promptCopies/{copyId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isSignedIn() && (
-        resource == null
-        || resource.data.userId == request.auth.uid
-        || isPromptAuthor(resource.data.promptId)
-      );
-      allow delete: if isSignedIn() && (
-        resource.data.userId == request.auth.uid
-        || isPromptAuthor(resource.data.promptId)
-      );
+      allow read: if true;
+      allow create: if isAppUserId(request.resource.data.userId)
+        && request.resource.data.promptId is string;
+      allow delete: if true;
+    }
+
+    match /paidLikes/{paidLikeId} {
+      allow read: if true;
+      allow create: if isAppUserId(request.resource.data.payerUid)
+        && isAppUserId(request.resource.data.creatorUid)
+        && request.resource.data.promptId is string
+        && request.resource.data.amountMist is string
+        && request.resource.data.amountSui is string
+        && request.resource.data.currency == 'SUI'
+        && request.resource.data.paymentRail == 'sui'
+        && request.resource.data.txDigest is string
+        && request.resource.data.network in ['testnet', 'mainnet', 'devnet'];
+      allow update, delete: if false;
     }
 
     match /workflowLikes/{likeId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isSignedIn() && (
-        resource == null
-        || resource.data.userId == request.auth.uid
-        || isWorkflowAuthor(resource.data.workflowId)
-      );
-      allow delete: if isSignedIn() && (
-        resource.data.userId == request.auth.uid
-        || isWorkflowAuthor(resource.data.workflowId)
-      );
+      allow read: if true;
+      allow create: if isAppUserId(request.resource.data.userId)
+        && request.resource.data.workflowId is string;
+      allow delete: if true;
     }
 
     match /workflowSaves/{saveId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isSignedIn() && (
-        resource == null
-        || resource.data.userId == request.auth.uid
-        || isWorkflowAuthor(resource.data.workflowId)
-      );
-      allow delete: if isSignedIn() && (
-        resource.data.userId == request.auth.uid
-        || isWorkflowAuthor(resource.data.workflowId)
-      );
+      allow read: if true;
+      allow create: if isAppUserId(request.resource.data.userId)
+        && request.resource.data.workflowId is string;
+      allow delete: if true;
     }
 
     match /notifications/{notificationId} {
-      allow read, update: if isOwner(resource.data.userId);
-      allow create: if isSignedIn()
-        && request.resource.data.fromUid == request.auth.uid
-        && request.resource.data.userId is string
-        && request.resource.data.userId != request.auth.uid
+      allow read, update: if true;
+      allow create: if isAppUserId(request.resource.data.fromUid)
+        && isAppUserId(request.resource.data.userId)
+        && request.resource.data.userId != request.resource.data.fromUid
         && request.resource.data.type in ['follow', 'like', 'copy', 'fork']
         && request.resource.data.fromHandle is string
         && request.resource.data.message is string
-        && (
-          !('fromAvatar' in request.resource.data)
-          || request.resource.data.fromAvatar is string
-        )
-        && (
-          !('promptId' in request.resource.data)
-          || request.resource.data.promptId is string
-        )
-        && (
-          !('workflowId' in request.resource.data)
-          || request.resource.data.workflowId is string
-        )
         && request.resource.data.read == false;
     }
 
     match /collections/{collectionId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if true;
+      allow create: if isAppUserId(request.resource.data.userId)
+        && request.resource.data.name is string
+        && request.resource.data.count is number
+        && request.resource.data.thumbnails is list;
+      allow update: if isAppUserId(resource.data.userId)
+        && request.resource.data.userId == resource.data.userId;
     }
 
     match /userFollows/{followId} {
       allow read: if true;
-      allow create: if isSignedIn()
-        && request.resource.data.followerUid == request.auth.uid
-        && request.resource.data.followingUid is string
-        && request.resource.data.followingUid != request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.followerUid == request.auth.uid;
+      allow create: if isAppUserId(request.resource.data.followerUid)
+        && isAppUserId(request.resource.data.followingUid)
+        && request.resource.data.followerUid != request.resource.data.followingUid;
+      allow delete: if true;
     }
   }
 }

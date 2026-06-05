@@ -1,5 +1,5 @@
 import { useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { Heart, Bookmark, GitFork, Copy, Check, Play } from 'lucide-react';
+import { Heart, Bookmark, GitFork, Copy, Check, Loader2, Play } from 'lucide-react';
 import { Prompt } from '../../lib/types';
 import { useNavigate } from 'react-router';
 import { formatDistanceToNow } from 'date-fns';
@@ -18,6 +18,7 @@ interface PromptCardProps {
   isForked?: boolean;
   isCopied?: boolean;
   isFollowing?: boolean;
+  isLikePending?: boolean;
   showFollowButton?: boolean;
 }
 
@@ -33,6 +34,7 @@ export function PromptCard({
   isForked: userHasForked = false,
   isCopied = false,
   isFollowing = false,
+  isLikePending = false,
   showFollowButton = true,
 }: PromptCardProps) {
   const navigate = useNavigate();
@@ -286,13 +288,18 @@ export function PromptCard({
             event.stopPropagation();
             onLike?.(prompt.id);
           }}
+          disabled={isLikePending}
           className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
             isLiked
               ? 'bg-red-500/10 text-red-500 border border-red-500/30'
               : 'glass-surface text-[var(--cuerate-text-2)] hover:text-red-400 hover:border-red-400/30'
-          }`}
+          } disabled:opacity-60 disabled:cursor-not-allowed`}
         >
-          <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500' : ''}`} />
+          {isLikePending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500' : ''}`} />
+          )}
           <span>{prompt.likes}</span>
         </button>
 

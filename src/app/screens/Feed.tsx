@@ -1,18 +1,32 @@
 import { useEffect, useState } from 'react';
 import { Bell, Settings, Image, Video, Filter, ChevronDown, Check } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useSuiClient } from '@mysten/dapp-kit';
+import { useEnokiFlow } from '@mysten/enoki/react';
 import { PromptCard } from '../components/PromptCard';
 import { WorkflowCard } from '../components/WorkflowCard';
 import { ForkPromptModal } from '../components/ForkPromptModal';
-import { followsApi, metaApi, notificationsApi, promptsApi, uploadsApi, workflowsApi } from '../../lib/backend';
+import { followsApi, metaApi, notificationsApi, paymentsApi, promptsApi, uploadsApi, workflowsApi } from '../../lib/backend';
 import { useAuth } from '../../lib/auth-context';
 import { createVideoThumbnailFile, detectImageFileDimensions, detectVideoFileDimensions } from '../../lib/media';
 import { useBackendQuery } from '../../lib/useBackendQuery';
 import { Prompt, Workflow } from '../../lib/types';
 import { truncateText } from '../../lib/text';
+import {
+  isAttributionConfigured,
+  recordForkAttributionOnchain,
+} from '../../lib/attribution';
+import {
+  isSuiAddress,
+  isSuiPaidLikesEnabled,
+  paidLikeAmountMist,
+  sendSuiPayment,
+} from '../../lib/sui-payments';
 
 export function Feed() {
   const navigate = useNavigate();
+  const suiClient = useSuiClient();
+  const enokiFlow = useEnokiFlow();
   const { user: activeUser, isLoading: authIsLoading } = useAuth();
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
   const [contentType, setContentType] = useState<'all' | 'image' | 'video'>('all');
@@ -28,6 +42,7 @@ export function Feed() {
   const [workflowOverrides, setWorkflowOverrides] = useState<Record<string, Workflow>>({});
   const [likedWorkflows, setLikedWorkflows] = useState<Set<string>>(new Set());
   const [savedWorkflows, setSavedWorkflows] = useState<Set<string>>(new Set());
+  const [paidLikePromptIds, setPaidLikePromptIds] = useState<Set<string>>(new Set());
 
   const { data: prompts } = useBackendQuery(() => promptsApi.getFeedPrompts(), [], []);
   const { data: workflows } = useBackendQuery(() => workflowsApi.getFeedWorkflows(), [], []);
@@ -200,7 +215,7 @@ export function Feed() {
     });
   };
 
-  const handleLike = (promptId: string) => {
+  const handleLike = async (promptId: string) => {
     const viewer = getAuthedUser();
     if (!viewer) {
       return;
@@ -212,6 +227,52 @@ export function Feed() {
     }
 
     const wasLiked = likedPrompts.has(promptId);
+    const shouldPayCreator =
+      isSuiPaidLikesEnabled
+      && !wasLiked
+      && targetPrompt.authorUid !== viewer.uid
+      && isSuiAddress(targetPrompt.authorUid);
+
+    if (shouldPayCreator) {
+      if (paidLikePromptIds.has(promptId)) {
+        return;
+      }
+
+      setPaidLikePromptIds((prev) => {
+        const next = new Set(prev);
+        next.add(promptId);
+        return next;
+      });
+
+      try {
+        const payment = await sendSuiPayment(
+          {
+            recipient: targetPrompt.authorUid,
+            amountMist: paidLikeAmountMist,
+          },
+          enokiFlow,
+          suiClient,
+        );
+
+        await paymentsApi.recordPaidLike({
+          promptId,
+          payerUid: viewer.uid,
+          creatorUid: targetPrompt.authorUid,
+          amountMist: payment.amountMist,
+          amountSui: payment.amountSui,
+          txDigest: payment.txDigest,
+          network: payment.network,
+        });
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : 'Could not complete paid like.');
+        setPaidLikePromptIds((prev) => {
+          const next = new Set(prev);
+          next.delete(promptId);
+          return next;
+        });
+        return;
+      }
+    }
 
     setLikedPrompts((prev) => {
       const newSet = new Set(prev);
@@ -267,6 +328,13 @@ export function Feed() {
           ...prev,
           [promptId]: targetPrompt,
         }));
+      })
+      .finally(() => {
+        setPaidLikePromptIds((prev) => {
+          const next = new Set(prev);
+          next.delete(promptId);
+          return next;
+        });
       });
   };
 
@@ -790,6 +858,7 @@ export function Feed() {
                 showFollowButton={!(activeUser && item.prompt.authorUid === activeUser.uid)}
                 onLike={handleLike}
                 isLiked={likedPrompts.has(item.prompt.id)}
+                isLikePending={paidLikePromptIds.has(item.prompt.id)}
                 onSave={handleSave}
                 isSaved={savedPrompts.has(item.prompt.id)}
                 onFork={handleFork}
@@ -826,6 +895,8 @@ export function Feed() {
             let mediaWidth: number | undefined;
             let mediaHeight: number | undefined;
             let aspectRatio: 'portrait' | 'landscape' | undefined;
+            let contentBlobId: string | undefined;
+            let metadataBlobId: string | undefined;
 
             if (mediaFile) {
               if (forkModalPrompt.contentType === 'video') {
@@ -843,6 +914,8 @@ export function Feed() {
                 const uploadedThumbnail = await uploadsApi.uploadPromptMedia(thumbnailFile, viewer.uid);
                 uploadedVideoUrl = uploadedVideo.downloadUrl;
                 uploadedThumbnailUrl = uploadedThumbnail.downloadUrl;
+                contentBlobId = uploadedVideo.blobId;
+                metadataBlobId = uploadedThumbnail.blobId;
               } else {
                 if (!mediaFile.type.startsWith('image/')) {
                   throw new Error('This fork requires an image file.');
@@ -856,10 +929,15 @@ export function Feed() {
                 const uploadedImage = await uploadsApi.uploadPromptMedia(mediaFile, viewer.uid);
                 uploadedVideoUrl = '';
                 uploadedThumbnailUrl = uploadedImage.downloadUrl;
+                contentBlobId = uploadedImage.blobId;
+                metadataBlobId = uploadedImage.blobId;
               }
+            } else {
+              contentBlobId = forkModalPrompt.walrusContentBlobId;
+              metadataBlobId = forkModalPrompt.walrusMetadataBlobId;
             }
 
-            const createdFork = await promptsApi.forkPrompt({
+            let createdFork = await promptsApi.forkPrompt({
               sourcePromptId: forkModalPrompt.id,
               authorUid: viewer.uid,
               promptText: forkedPrompt.promptText ?? forkModalPrompt.promptText,
@@ -871,7 +949,45 @@ export function Feed() {
               mediaWidth,
               mediaHeight,
               aspectRatio,
+              walrusContentBlobId: contentBlobId,
+              walrusMetadataBlobId: metadataBlobId,
             });
+
+            if (
+              isAttributionConfigured
+              && forkModalPrompt.onchainAttributionId
+              && contentBlobId
+            ) {
+              try {
+                const attribution = await recordForkAttributionOnchain(
+                  {
+                    parentAttributionObjectId: forkModalPrompt.onchainAttributionId,
+                    promptId: createdFork.id,
+                    contentBlobId,
+                    metadataBlobId,
+                  },
+                  enokiFlow,
+                  suiClient,
+                );
+
+                await promptsApi.updateOnchainAttribution(createdFork.id, viewer.uid, {
+                  onchainAttributionId: attribution.attributionObjectId,
+                  onchainAttributionTxDigest: attribution.txDigest,
+                  walrusContentBlobId: contentBlobId,
+                  walrusMetadataBlobId: metadataBlobId,
+                });
+
+                createdFork = {
+                  ...createdFork,
+                  onchainAttributionId: attribution.attributionObjectId ?? undefined,
+                  onchainAttributionTxDigest: attribution.txDigest,
+                  walrusContentBlobId: contentBlobId,
+                  walrusMetadataBlobId: metadataBlobId,
+                };
+              } catch (error) {
+                console.warn('Could not record fork attribution onchain:', error);
+              }
+            }
 
             setLocalCreatedPrompts((prev) => [createdFork, ...prev.filter((entry) => entry.id !== createdFork.id)]);
             setPromptOverrides((prev) => ({

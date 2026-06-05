@@ -23,6 +23,7 @@ import {
   difficultyLevels,
   ForkPromptInput,
   Notification,
+  PaidLike,
   Prompt,
   PromptCreateInput,
   User,
@@ -42,6 +43,7 @@ import {
 // truth is the Enoki session managed by the AuthProvider.
 const LOCAL_AUTH_USER_KEY = 'cuerate.auth.user';
 const authListeners = new Set<(user: User | null) => void>();
+const mockPaidLikes: PaidLike[] = [];
 
 const COLLECTIONS = {
   users: 'users',
@@ -49,6 +51,7 @@ const COLLECTIONS = {
   promptLikes: 'promptLikes',
   promptSaves: 'promptSaves',
   promptCopies: 'promptCopies',
+  paidLikes: 'paidLikes',
   workflows: 'workflows',
   workflowLikes: 'workflowLikes',
   workflowSaves: 'workflowSaves',
@@ -187,8 +190,16 @@ function deserializePrompt(id: string, data: Record<string, unknown>): Prompt {
     isForked: Boolean(data.isForked),
     forkedFromId: data.forkedFromId ? String(data.forkedFromId) : null,
     forkedFromAuthorHandle: data.forkedFromAuthorHandle ? String(data.forkedFromAuthorHandle) : null,
+    onchainAttributionId: data.onchainAttributionId ? String(data.onchainAttributionId) : undefined,
+    onchainAttributionTxDigest: data.onchainAttributionTxDigest ? String(data.onchainAttributionTxDigest) : undefined,
+    walrusContentBlobId: data.walrusContentBlobId ? String(data.walrusContentBlobId) : undefined,
+    walrusMetadataBlobId: data.walrusMetadataBlobId ? String(data.walrusMetadataBlobId) : undefined,
     createdAt: toDate(data.createdAt),
   };
+}
+
+function clonePaidLike(paidLike: PaidLike): PaidLike {
+  return cloneDate(paidLike);
 }
 
 function deserializeNotification(id: string, data: Record<string, unknown>): Notification {
@@ -215,6 +226,22 @@ function deserializeCollection(id: string, data: Record<string, unknown>): Colle
     description: data.description ? String(data.description) : undefined,
     count: Number(data.count ?? 0),
     thumbnails: Array.isArray(data.thumbnails) ? data.thumbnails.map(String) : [],
+    createdAt: toDate(data.createdAt),
+  };
+}
+
+function deserializePaidLike(id: string, data: Record<string, unknown>): PaidLike {
+  return {
+    id,
+    promptId: String(data.promptId ?? ''),
+    payerUid: String(data.payerUid ?? ''),
+    creatorUid: String(data.creatorUid ?? ''),
+    amountMist: String(data.amountMist ?? ''),
+    amountSui: String(data.amountSui ?? ''),
+    currency: 'SUI',
+    paymentRail: 'sui',
+    txDigest: String(data.txDigest ?? ''),
+    network: data.network === 'mainnet' || data.network === 'devnet' ? data.network : 'testnet',
     createdAt: toDate(data.createdAt),
   };
 }
@@ -959,6 +986,10 @@ export const promptsApi = {
       isForked: false,
       forkedFromId: null,
       forkedFromAuthorHandle: null,
+      onchainAttributionId: undefined,
+      onchainAttributionTxDigest: undefined,
+      walrusContentBlobId: input.walrusContentBlobId,
+      walrusMetadataBlobId: input.walrusMetadataBlobId,
       createdAt: new Date(),
     };
 
@@ -1287,6 +1318,8 @@ export const promptsApi = {
       thumbnailUrl: input.thumbnailUrl ?? sourcePrompt.thumbnailUrl,
       mediaWidth: input.mediaWidth ?? sourcePrompt.mediaWidth,
       mediaHeight: input.mediaHeight ?? sourcePrompt.mediaHeight,
+      walrusContentBlobId: input.walrusContentBlobId ?? sourcePrompt.walrusContentBlobId,
+      walrusMetadataBlobId: input.walrusMetadataBlobId ?? sourcePrompt.walrusMetadataBlobId,
     });
 
     const result: Prompt = {
@@ -1348,6 +1381,52 @@ export const promptsApi = {
     }
 
     return result;
+  },
+
+  async updateOnchainAttribution(
+    promptId: string,
+    userId: string,
+    input: {
+      onchainAttributionId?: string | null;
+      onchainAttributionTxDigest?: string | null;
+      walrusContentBlobId?: string | null;
+      walrusMetadataBlobId?: string | null;
+    },
+  ): Promise<void> {
+    if (!promptId || !userId) {
+      return;
+    }
+
+    const updates = stripUndefinedFields({
+      onchainAttributionId: input.onchainAttributionId || undefined,
+      onchainAttributionTxDigest: input.onchainAttributionTxDigest || undefined,
+      walrusContentBlobId: input.walrusContentBlobId || undefined,
+      walrusMetadataBlobId: input.walrusMetadataBlobId || undefined,
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return;
+    }
+
+    if (!firebaseEnabled) {
+      const target = mockPrompts.find((prompt) => prompt.id === promptId && prompt.authorUid === userId);
+      if (target) {
+        Object.assign(target, updates);
+      }
+      return;
+    }
+
+    const firestore = requireDb();
+    const promptRef = doc(firestore, COLLECTIONS.prompts, promptId);
+    const snapshot = await getDoc(promptRef);
+    if (!snapshot.exists()) {
+      throw new Error('Prompt not found.');
+    }
+    if (String(snapshot.data().authorUid ?? '') !== userId) {
+      throw new Error('Only the author can attach attribution metadata.');
+    }
+
+    await updateDoc(promptRef, updates);
   },
 };
 
@@ -1767,6 +1846,99 @@ export const collectionsApi = {
       ...collectionItem,
       id: created.id,
     };
+  },
+};
+
+export const paymentsApi = {
+  async recordPaidLike(input: {
+    promptId: string;
+    payerUid: string;
+    creatorUid: string;
+    amountMist: string;
+    amountSui: string;
+    txDigest: string;
+    network: PaidLike['network'];
+  }): Promise<PaidLike> {
+    if (!input.promptId || !input.payerUid || !input.creatorUid || !input.txDigest) {
+      throw new Error('Missing payment receipt fields.');
+    }
+
+    const paidLike: PaidLike = {
+      id: crypto.randomUUID(),
+      promptId: input.promptId,
+      payerUid: input.payerUid,
+      creatorUid: input.creatorUid,
+      amountMist: input.amountMist,
+      amountSui: input.amountSui,
+      currency: 'SUI',
+      paymentRail: 'sui',
+      txDigest: input.txDigest,
+      network: input.network,
+      createdAt: new Date(),
+    };
+
+    if (!firebaseEnabled) {
+      mockPaidLikes.unshift(clonePaidLike(paidLike));
+      return clonePaidLike(paidLike);
+    }
+
+    const firestore = requireDb();
+    const paidLikeDocument = { ...paidLike } as Omit<PaidLike, 'id'> & { id?: string };
+    delete paidLikeDocument.id;
+    const created = await addDoc(collection(firestore, COLLECTIONS.paidLikes), {
+      ...stripUndefinedFields(paidLikeDocument),
+    });
+
+    return {
+      ...paidLike,
+      id: created.id,
+    };
+  },
+
+  async getPaidLikesForCreator(creatorUid: string): Promise<PaidLike[]> {
+    if (!creatorUid) {
+      return [];
+    }
+
+    if (!firebaseEnabled) {
+      return mockPaidLikes
+        .filter((entry) => entry.creatorUid === creatorUid)
+        .map(clonePaidLike);
+    }
+
+    const firestore = requireDb();
+    const snapshot = await getDocs(
+      query(
+        collection(firestore, COLLECTIONS.paidLikes),
+        where('creatorUid', '==', creatorUid),
+        orderBy('createdAt', 'desc'),
+      ),
+    );
+
+    return snapshot.docs.map((entry) => deserializePaidLike(entry.id, entry.data() as Record<string, unknown>));
+  },
+
+  async getPaidLikesForPrompt(promptId: string): Promise<PaidLike[]> {
+    if (!promptId) {
+      return [];
+    }
+
+    if (!firebaseEnabled) {
+      return mockPaidLikes
+        .filter((entry) => entry.promptId === promptId)
+        .map(clonePaidLike);
+    }
+
+    const firestore = requireDb();
+    const snapshot = await getDocs(
+      query(
+        collection(firestore, COLLECTIONS.paidLikes),
+        where('promptId', '==', promptId),
+        orderBy('createdAt', 'desc'),
+      ),
+    );
+
+    return snapshot.docs.map((entry) => deserializePaidLike(entry.id, entry.data() as Record<string, unknown>));
   },
 };
 

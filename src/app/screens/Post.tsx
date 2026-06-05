@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Loader2, Sparkles, Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useSuiClient } from '@mysten/dapp-kit';
+import { useEnokiFlow } from '@mysten/enoki/react';
 import { metaApi, promptsApi, uploadsApi, workflowsApi } from '../../lib/backend';
 import { useAuth } from '../../lib/auth-context';
+import {
+  isAttributionConfigured,
+  recordPromptAttributionOnchain,
+} from '../../lib/attribution';
 import {
   createVideoThumbnailFile,
   detectImageFileDimensions,
@@ -80,6 +86,8 @@ function ensureNanoBananaOption(models: string[]) {
 
 export function Post() {
   const navigate = useNavigate();
+  const suiClient = useSuiClient();
+  const enokiFlow = useEnokiFlow();
   const { user: activeUser, isLoading: authIsLoading } = useAuth();
   const [postMode, setPostMode] = useState<PostMode>('prompt');
   const [isPublishing, setIsPublishing] = useState(false);
@@ -213,6 +221,8 @@ export function Post() {
     let thumbnailUrl = '';
     let mediaWidth: number | undefined;
     let mediaHeight: number | undefined;
+    let contentBlobId: string | undefined;
+    let metadataBlobId: string | undefined;
 
     if (contentType === 'video') {
       if (!mediaFile.type.startsWith('video/')) {
@@ -228,6 +238,8 @@ export function Post() {
       );
       videoUrl = videoUpload.downloadUrl;
       thumbnailUrl = thumbnailUpload.downloadUrl;
+      contentBlobId = videoUpload.blobId;
+      metadataBlobId = thumbnailUpload.blobId;
     } else {
       if (!mediaFile.type.startsWith('image/')) {
         throw new Error('Selected file is not an image.');
@@ -237,9 +249,11 @@ export function Post() {
       mediaHeight = dims.height;
       const imageUpload = await uploadsApi.uploadPromptMedia(mediaFile, activeUser.uid);
       thumbnailUrl = imageUpload.downloadUrl;
+      contentBlobId = imageUpload.blobId;
+      metadataBlobId = imageUpload.blobId;
     }
 
-    await promptsApi.createPrompt({
+    const created = await promptsApi.createPrompt({
       authorUid: activeUser.uid,
       promptText: promptText.trim(),
       model: selectedModel,
@@ -253,7 +267,32 @@ export function Post() {
       thumbnailUrl,
       mediaWidth,
       mediaHeight,
+      walrusContentBlobId: contentBlobId,
+      walrusMetadataBlobId: metadataBlobId,
     });
+
+    if (isAttributionConfigured && contentBlobId) {
+      try {
+        const attribution = await recordPromptAttributionOnchain(
+          {
+            promptId: created.id,
+            contentBlobId,
+            metadataBlobId,
+          },
+          enokiFlow,
+          suiClient,
+        );
+
+        await promptsApi.updateOnchainAttribution(created.id, activeUser.uid, {
+          onchainAttributionId: attribution.attributionObjectId,
+          onchainAttributionTxDigest: attribution.txDigest,
+          walrusContentBlobId: contentBlobId,
+          walrusMetadataBlobId: metadataBlobId,
+        });
+      } catch (error) {
+        console.warn('Could not record prompt attribution onchain:', error);
+      }
+    }
   };
 
   const publishWorkflow = async () => {

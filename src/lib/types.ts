@@ -63,6 +63,10 @@ export interface Prompt {
   isForked: boolean;
   forkedFromId: string | null;
   forkedFromAuthorHandle: string | null;
+  onchainAttributionId?: string;
+  onchainAttributionTxDigest?: string;
+  walrusContentBlobId?: string;
+  walrusMetadataBlobId?: string;
   createdAt: Date;
 }
 
@@ -169,6 +173,20 @@ export interface Collection {
   createdAt: Date;
 }
 
+export interface PaidLike {
+  id: string;
+  promptId: string;
+  payerUid: string;
+  creatorUid: string;
+  amountMist: string;
+  amountSui: string;
+  currency: 'SUI';
+  paymentRail: 'sui';
+  txDigest: string;
+  network: 'testnet' | 'mainnet' | 'devnet';
+  createdAt: Date;
+}
+
 export interface PromptCreateInput {
   authorUid: string;
   promptText: string;
@@ -183,6 +201,8 @@ export interface PromptCreateInput {
   thumbnailUrl?: string;
   mediaWidth?: number;
   mediaHeight?: number;
+  walrusContentBlobId?: string;
+  walrusMetadataBlobId?: string;
 }
 
 export interface ForkPromptInput {
@@ -197,6 +217,8 @@ export interface ForkPromptInput {
   mediaHeight?: number;
   thumbnailUrl?: string;
   videoUrl?: string;
+  walrusContentBlobId?: string;
+  walrusMetadataBlobId?: string;
 }
 
 export interface CreateCollectionInput {
