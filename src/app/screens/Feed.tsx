@@ -42,7 +42,6 @@ export function Feed() {
   const [workflowOverrides, setWorkflowOverrides] = useState<Record<string, Workflow>>({});
   const [likedWorkflows, setLikedWorkflows] = useState<Set<string>>(new Set());
   const [savedWorkflows, setSavedWorkflows] = useState<Set<string>>(new Set());
-  const [paidLikePromptIds, setPaidLikePromptIds] = useState<Set<string>>(new Set());
 
   const { data: prompts } = useBackendQuery(() => promptsApi.getFeedPrompts(), [], []);
   const { data: workflows } = useBackendQuery(() => workflowsApi.getFeedWorkflows(), [], []);
@@ -233,16 +232,28 @@ export function Feed() {
       && targetPrompt.authorUid !== viewer.uid
       && isSuiAddress(targetPrompt.authorUid);
 
-    if (shouldPayCreator) {
-      if (paidLikePromptIds.has(promptId)) {
-        return;
+    // 1. Optimistic UI update — instant, no loading
+    setLikedPrompts((prev) => {
+      const newSet = new Set(prev);
+      if (wasLiked) {
+        newSet.delete(promptId);
+      } else {
+        newSet.add(promptId);
       }
+      return newSet;
+    });
 
-      setPaidLikePromptIds((prev) => {
-        const next = new Set(prev);
-        next.add(promptId);
-        return next;
-      });
+    setPromptOverrides((prev) => ({
+      ...prev,
+      [promptId]: {
+        ...(prev[promptId] ?? targetPrompt),
+        likes: Math.max(0, targetPrompt.likes + (wasLiked ? -1 : 1)),
+      },
+    }));
+
+    // 2. Background payment + backend sync
+    const runPayment = async () => {
+      if (!shouldPayCreator) return true;
 
       try {
         const payment = await sendSuiPayment(
@@ -263,35 +274,29 @@ export function Feed() {
           txDigest: payment.txDigest,
           network: payment.network,
         });
-      } catch (error) {
-        window.alert(error instanceof Error ? error.message : 'Could not complete paid like.');
-        setPaidLikePromptIds((prev) => {
-          const next = new Set(prev);
-          next.delete(promptId);
-          return next;
-        });
-        return;
+        return true;
+      } catch {
+        return false;
       }
+    };
+
+    const paymentOk = await runPayment();
+
+    if (!paymentOk) {
+      // Rollback — payment failed, silently remove the like
+      setLikedPrompts((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(promptId);
+        return newSet;
+      });
+      setPromptOverrides((prev) => ({
+        ...prev,
+        [promptId]: targetPrompt,
+      }));
+      return;
     }
 
-    setLikedPrompts((prev) => {
-      const newSet = new Set(prev);
-      if (wasLiked) {
-        newSet.delete(promptId);
-      } else {
-        newSet.add(promptId);
-      }
-      return newSet;
-    });
-
-    setPromptOverrides((prev) => ({
-      ...prev,
-      [promptId]: {
-        ...targetPrompt,
-        likes: Math.max(0, targetPrompt.likes + (wasLiked ? -1 : 1)),
-      },
-    }));
-
+    // 3. Sync like state with backend
     void promptsApi
       .toggleLike(promptId, viewer.uid)
       .then((result) => {
@@ -328,13 +333,6 @@ export function Feed() {
           ...prev,
           [promptId]: targetPrompt,
         }));
-      })
-      .finally(() => {
-        setPaidLikePromptIds((prev) => {
-          const next = new Set(prev);
-          next.delete(promptId);
-          return next;
-        });
       });
   };
 
@@ -858,7 +856,6 @@ export function Feed() {
                 showFollowButton={!(activeUser && item.prompt.authorUid === activeUser.uid)}
                 onLike={handleLike}
                 isLiked={likedPrompts.has(item.prompt.id)}
-                isLikePending={paidLikePromptIds.has(item.prompt.id)}
                 onSave={handleSave}
                 isSaved={savedPrompts.has(item.prompt.id)}
                 onFork={handleFork}

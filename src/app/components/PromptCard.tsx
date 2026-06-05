@@ -1,5 +1,5 @@
 import { useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { Heart, Bookmark, GitFork, Copy, Check, Loader2, Play } from 'lucide-react';
+import { Heart, Bookmark, GitFork, Copy, Check, Play, ExternalLink, Shield } from 'lucide-react';
 import { Prompt } from '../../lib/types';
 import { useNavigate } from 'react-router';
 import { formatDistanceToNow } from 'date-fns';
@@ -18,7 +18,6 @@ interface PromptCardProps {
   isForked?: boolean;
   isCopied?: boolean;
   isFollowing?: boolean;
-  isLikePending?: boolean;
   showFollowButton?: boolean;
 }
 
@@ -34,7 +33,6 @@ export function PromptCard({
   isForked: userHasForked = false,
   isCopied = false,
   isFollowing = false,
-  isLikePending = false,
   showFollowButton = true,
 }: PromptCardProps) {
   const navigate = useNavigate();
@@ -281,6 +279,21 @@ export function PromptCard({
         ))}
       </div>
 
+      {/* Onchain Attribution Proof */}
+      {prompt.onchainAttributionTxDigest && (
+        <a
+          href={`https://testnet.suivision.xyz/txblock/${prompt.onchainAttributionTxDigest}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="inline-flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-[var(--cuerate-r-sm)] bg-[var(--cuerate-indigo)]/10 border border-[var(--cuerate-indigo)]/20 text-[var(--cuerate-indigo)] font-accent text-xs hover:bg-[var(--cuerate-indigo)]/20 transition-all"
+        >
+          <Shield className="w-3 h-3" />
+          <span>Verified on Sui</span>
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      )}
+
       {/* Action Row */}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -288,18 +301,13 @@ export function PromptCard({
             event.stopPropagation();
             onLike?.(prompt.id);
           }}
-          disabled={isLikePending}
           className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
             isLiked
               ? 'bg-red-500/10 text-red-500 border border-red-500/30'
               : 'glass-surface text-[var(--cuerate-text-2)] hover:text-red-400 hover:border-red-400/30'
-          } disabled:opacity-60 disabled:cursor-not-allowed`}
+          }`}
         >
-          {isLikePending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500' : ''}`} />
-          )}
+          <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500' : ''}`} />
           <span>{prompt.likes}</span>
         </button>
 
