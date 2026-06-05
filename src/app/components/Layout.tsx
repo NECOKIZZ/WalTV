@@ -1,13 +1,16 @@
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router';
-import { Home, Compass, User, Bell, Settings, Plus } from 'lucide-react';
+import { Home, Compass, User, Bell, Settings, Plus, Wallet } from 'lucide-react';
+import { WalletModal } from './WalletModal';
 import { useAuth } from '../../lib/auth-context';
 import { truncateText } from '../../lib/text';
 import { notificationsApi } from '../../lib/backend';
 import { useBackendQuery } from '../../lib/useBackendQuery';
+import { useState } from 'react';
 
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [walletOpen, setWalletOpen] = useState(false);
   const { user, isLoading, signOut } = useAuth();
   const { data: notifications } = useBackendQuery(
     () => (user ? notificationsApi.getNotificationsForUser(user.uid) : Promise.resolve([])),
@@ -24,7 +27,8 @@ export function Layout() {
     { path: '/notifications', icon: Bell, label: 'Alerts' },
     { path: '/profile', icon: User, label: 'Profile' },
     { path: '/settings', icon: Settings, label: 'Settings' },
-  ].filter((entry) => !(isPromptDetailRoute && entry.path === '/post'));
+    { action: 'wallet', icon: Wallet, label: 'Wallet' },
+  ].filter((entry) => !(isPromptDetailRoute && 'path' in entry && entry.path === '/post'));
 
   const desktopNavItems = [
     { path: '/', icon: Home, label: 'Feed' },
@@ -134,6 +138,13 @@ export function Layout() {
               <Settings className="w-6 h-6" />
               <span className="text-base font-accent">Settings</span>
             </button>
+            <button
+              onClick={() => setWalletOpen(true)}
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--cuerate-r-md)] text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-surface)] transition-all"
+            >
+              <Wallet className="w-6 h-6" />
+              <span className="text-base font-accent">Wallet</span>
+            </button>
             {user && (
               <button
                 onClick={() => void signOut().then(() => navigate('/auth'))}
@@ -167,13 +178,26 @@ export function Layout() {
         style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="w-full px-2">
-          <div className="grid h-16 w-full grid-cols-5 items-center">
-            {navItems.map(({ path, icon: Icon, label }) => {
-              const active = isActive(path);
+          <div className="grid h-16 w-full grid-cols-6 items-center">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              if ('action' in item) {
+                return (
+                  <button
+                    key={item.action}
+                    onClick={() => setWalletOpen(true)}
+                    className="flex w-full flex-col items-center justify-center gap-1 transition-all min-h-[48px] px-1 py-1 rounded-[var(--cuerate-r-md)] text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]"
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-accent text-[10px] font-normal">{item.label}</span>
+                  </button>
+                );
+              }
+              const active = isActive(item.path);
               return (
                 <button
-                  key={path}
-                  onClick={() => navigateWithAuth(path)}
+                  key={item.path}
+                  onClick={() => navigateWithAuth(item.path)}
                   className={`flex w-full flex-col items-center justify-center gap-1 transition-all min-h-[48px] px-1 py-1 rounded-[var(--cuerate-r-md)] ${
                     active
                       ? 'text-[var(--cuerate-indigo)] bg-[var(--cuerate-indigo)]/10'
@@ -184,7 +208,7 @@ export function Layout() {
                   <span
                     className={`font-accent text-[10px] ${active ? 'font-medium' : 'font-normal'}`}
                   >
-                    {label}
+                    {item.label}
                   </span>
                 </button>
               );
@@ -192,6 +216,8 @@ export function Layout() {
           </div>
         </div>
       </nav>
+
+      <WalletModal open={walletOpen} onClose={() => setWalletOpen(false)} />
     </div>
   );
 }
