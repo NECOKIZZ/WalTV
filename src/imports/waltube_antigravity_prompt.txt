@@ -1,12 +1,12 @@
 ====================================================
-CUERATE — ANTIGRAVITY FOUNDING PROMPT
+WalTube — ANTIGRAVITY FOUNDING PROMPT
 ====================================================
 Paste this entire document into Antigravity's Agent Manager.
 
 ----------------------------------------------------
 PROJECT OVERVIEW
 ----------------------------------------------------
-Build a full-stack mobile-first social media web app called Cuerate — a platform where AI video creators share their prompts alongside the video results they produced. Think Instagram × GitHub for AI video prompts. Creators post a prompt + video, the community scrolls, copies prompts they like, forks and remixes them, and follows creators whose style they love.
+Build a full-stack mobile-first social media web app called WalTube — a platform where AI video creators share their prompts alongside the video results they produced. Think Instagram × GitHub for AI video prompts. Creators post a prompt + video, the community scrolls, copies prompts they like, forks and remixes them, and follows creators whose style they love.
 
 The app is fully responsive and optimized for mobile. It should feel and look like a native iOS/Android app when opened on a phone.
 
@@ -182,14 +182,14 @@ Content:
   9. Publish button:
      - Full-width, tall, rounded-pill
      - Indigo gradient (left: #5500cc, right: #1877F2)
-     - Label: "Publish to Cuerate"
+     - Label: "Publish to WalTube"
      - Indigo glow effect
 
 AI AUTO-FILL SYSTEM (/api/autofill Next.js route):
   Accepts: { promptText: string, thumbnailBase64?: string }
   Calls Claude API with this system prompt:
   ---
-  You are an AI metadata assistant for Cuerate, a platform for AI-generated video prompts.
+  You are an AI metadata assistant for WalTube, a platform for AI-generated video prompts.
   Given a raw AI video prompt (and optionally a thumbnail image), generate structured metadata.
   Return ONLY valid JSON with no preamble or markdown:
   {
@@ -290,7 +290,7 @@ Avatar of the "from" user on left
 Full-screen flow, 3 steps with progress dots at top:
 
 Step 1 — Welcome:
-  - Large "Cuerate" logo with indigo glow
+  - Large "WalTube" logo with indigo glow
   - Tagline: "curate your prompts. rate the results."
   - Subtext: "The home for AI video prompts."
   - "Get Started" button (full-width, indigo gradient, pill)
@@ -325,7 +325,7 @@ COPY COUNT TRACKING
 - Also increment the author's totalCopies in their user document
 - Log the copy event in the COPIES collection (userId, promptId, createdAt)
 - On User Profile, display totalCopies as a prominent stat
-- "Copy count" is the primary vanity metric on Cuerate — more important than likes
+- "Copy count" is the primary vanity metric on WalTube — more important than likes
 
 ----------------------------------------------------
 FORK SYSTEM LOGIC

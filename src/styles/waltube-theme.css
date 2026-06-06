@@ -1,0 +1,339 @@
+/* WalTube Custom Theme Variables */
+:root {
+  /* WalTube Colors — derived from Walrus brand palette */
+  --waltube-blue: #7B4FD4;
+  --waltube-indigo: #2dd4beb7;
+  --waltube-bg: #0B1120;
+  --waltube-bg-elevated: #0F172A;
+  --waltube-surface: rgba(255, 255, 255, 0.035);
+  --waltube-surface-hover: rgba(255, 255, 255, 0.06);
+  --waltube-surface-active: rgba(255, 255, 255, 0.08);
+  --waltube-border-subtle: rgba(255, 255, 255, 0.06);
+  --waltube-border-highlight: rgba(45, 212, 191, 0.18);
+  --waltube-text-1: #f0fdfa;
+  --waltube-text-2: #94a3b8;
+  --waltube-text-3: #334155;
+  --waltube-indigo-glow: rgba(45, 212, 191, 0.32);
+  --waltube-blue-glow: rgba(123, 79, 212, 0.35);
+  --waltube-gradient-start: rgba(123, 79, 212, 0.15);
+  --waltube-gradient-end: rgba(45, 212, 191, 0.10);
+
+  /* WalTube Border Radius */
+  --waltube-r-sm: 12px;
+  --waltube-r-md: 18px;
+  --waltube-r-lg: 24px;
+  --waltube-r-xl: 32px;
+  --waltube-r-pill: 999px;
+
+  /* WalTube Fonts */
+  --waltube-font-primary: 'Bricolage Grotesque', sans-serif;
+  --waltube-font-accent: 'Inter', sans-serif;
+
+  /* Micro-interaction tokens */
+  --waltube-duration-micro: 100ms;
+  --waltube-duration-short: 150ms;
+  --waltube-duration-medium: 200ms;
+  --waltube-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --waltube-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile-first optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html {
+  /* Prevent pull-to-refresh and overscroll on mobile */
+  overscroll-behavior-y: contain;
+  /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  font-family: var(--waltube-font-primary);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, var(--waltube-gradient-start), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--waltube-gradient-end), transparent),
+    var(--waltube-bg);
+  background-attachment: fixed;
+  color: var(--waltube-text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent text size adjustment on mobile */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Use safe area for notched devices */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+::selection {
+  background: rgba(123, 79, 212, 0.35);
+  color: var(--waltube-text-1);
+}
+
+/* Utility Classes */
+.font-primary {
+  font-family: var(--waltube-font-primary);
+}
+
+.font-accent {
+  font-family: var(--waltube-font-accent);
+}
+
+.glass-surface {
+  background: var(--waltube-surface);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--waltube-border-subtle);
+  transition: background var(--waltube-duration-micro) var(--waltube-ease-out),
+              border-color var(--waltube-duration-micro) var(--waltube-ease-out),
+              transform var(--waltube-duration-short) var(--waltube-ease-out);
+}
+
+.glass-surface:hover {
+  background: var(--waltube-surface-hover);
+  border-color: var(--waltube-border-highlight);
+}
+
+.glass-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--waltube-border-subtle);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: background var(--waltube-duration-micro) var(--waltube-ease-out),
+              border-color var(--waltube-duration-micro) var(--waltube-ease-out),
+              box-shadow var(--waltube-duration-short) var(--waltube-ease-out),
+              transform var(--waltube-duration-short) var(--waltube-ease-out);
+}
+
+.glass-card:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  border-color: var(--waltube-border-highlight);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.3),
+    0 0 20px var(--waltube-indigo-glow),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  transform: translateY(-1px);
+}
+
+.glass-nav {
+  background: rgba(11, 17, 32, 0.82);
+  backdrop-filter: blur(32px) saturate(140%);
+  -webkit-backdrop-filter: blur(32px) saturate(140%);
+  border-right: 1px solid var(--waltube-border-subtle);
+}
+
+.indigo-glow {
+  box-shadow: 0 0 20px var(--waltube-indigo-glow), 0 0 40px rgba(45,212,191,0.10);
+}
+
+.blue-glow {
+  box-shadow: 0 0 20px var(--waltube-blue-glow), 0 0 40px rgba(123,79,212,0.10);
+}
+
+.card-top-edge {
+  position: relative;
+}
+
+.card-top-edge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--waltube-indigo), transparent);
+  opacity: 0.6;
+}
+
+.card-top-edge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(123,79,212,0.5), transparent);
+}
+
+.ambient-glow {
+  position: fixed;
+  top: -240px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle at 50% 30%, var(--waltube-indigo-glow), transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(60px);
+}
+
+.ambient-glow-secondary {
+  position: fixed;
+  bottom: -100px;
+  right: -100px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--waltube-blue-glow), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(50px);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Thin branded scrollbar for scrollable areas */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(123, 79, 212, 0.35);
+  border-radius: 999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(123, 79, 212, 0.55);
+}
+
+/* Mobile-first responsive container */
+@media (max-width: 480px) {
+  .waltube-container {
+    width: 100%;
+    min-height: 100dvh;
+  }
+}
+
+/* Extra small screens (320px - 360px) */
+@media (max-width: 360px) {
+  .waltube-container {
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  /* Reduce padding on very small screens */
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .waltube-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 769px) {
+  .waltube-container {
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+/* Desktop layout utilities */
+.desktop-sidebar {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .desktop-sidebar {
+    display: flex;
+  }
+
+  .mobile-nav {
+    display: none;
+  }
+
+  .desktop-main-content {
+    margin-left: 260px;
+    max-width: 1400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-nav {
+    display: block;
+  }
+}
+
+/* Masonry feed layout for mixed-height cards */
+.prompt-grid {
+  column-count: 1;
+  column-gap: 1rem;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .prompt-grid {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 1025px) {
+  .prompt-grid {
+    column-count: 3;
+  }
+}
+
+.prompt-masonry-item {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+/* ── Skeleton / Shimmer ── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--waltube-r-sm);
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton-pulse {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--waltube-r-sm);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

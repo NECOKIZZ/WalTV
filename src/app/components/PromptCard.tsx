@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { getAIModelConfig } from '../../lib/aiModelLogos';
 import { truncateText } from '../../lib/text';
+import { Avatar } from './Avatar';
 
 interface PromptCardProps {
   prompt: Prompt;
@@ -132,7 +133,7 @@ export function PromptCard({
 
   return (
     <div
-      className="prompt-masonry-item glass-surface rounded-[var(--cuerate-r-lg)] p-4 card-top-edge cursor-pointer transition-transform duration-300 hover:-translate-y-0.5"
+      className="prompt-masonry-item glass-card rounded-[var(--waltube-r-lg)] p-4 card-top-edge cursor-pointer"
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
@@ -142,10 +143,11 @@ export function PromptCard({
       {/* Card Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <img
+          <Avatar
             src={prompt.authorAvatar}
             alt={prompt.authorHandle}
-            className="w-[34px] h-[34px] rounded-full border-2 border-[var(--cuerate-indigo)] object-cover object-center"
+            size={34}
+            className="border-2 border-[var(--waltube-indigo)]"
           />
           <div className="min-w-0">
             <button
@@ -153,13 +155,13 @@ export function PromptCard({
                 event.stopPropagation();
                 navigate(`/user/${prompt.authorHandle}`);
               }}
-              className="max-w-[132px] truncate font-primary font-medium text-[var(--cuerate-text-1)] hover:text-[var(--cuerate-indigo)] transition-colors"
+              className="max-w-[132px] truncate font-primary font-medium text-[var(--waltube-text-1)] hover:text-[var(--waltube-indigo)] transition-colors"
               title={`@${prompt.authorHandle}`}
             >
               @{displayAuthorHandle}
             </button>
             <div className="flex items-center gap-2">
-              <span className="font-accent text-xs text-[var(--cuerate-text-2)]">
+              <span className="font-accent text-xs text-[var(--waltube-text-2)]">
                 {formatDistanceToNow(prompt.createdAt, { addSuffix: true })}
               </span>
               
@@ -172,10 +174,10 @@ export function PromptCard({
               event.stopPropagation();
               onFollow?.(prompt.authorUid);
             }}
-            className={`px-4 py-1.5 rounded-[var(--cuerate-r-pill)] ${
+            className={`px-4 py-1.5 rounded-[var(--waltube-r-pill)] ${
               isFollowing
-                ? 'bg-[var(--cuerate-indigo)]/10 text-[var(--cuerate-indigo)]'
-                : 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
+                ? 'bg-[var(--waltube-indigo)]/10 text-[var(--waltube-indigo)]'
+                : 'bg-[var(--waltube-indigo)] text-white indigo-glow'
             } font-accent text-xs font-medium transition-opacity hover:opacity-90`}
           >
             {isFollowing ? 'Following' : 'Follow'}
@@ -185,14 +187,14 @@ export function PromptCard({
 
       {/* Fork Attribution */}
       {prompt.isForked && prompt.forkedFromAuthorHandle && prompt.forkedFromId && (
-        <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-[var(--cuerate-r-md)] bg-[var(--cuerate-indigo)]/10">
-          <GitFork className="w-3 h-3 text-[var(--cuerate-indigo)]" />
+        <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-[var(--waltube-r-md)] bg-[var(--waltube-indigo)]/10">
+          <GitFork className="w-3 h-3 text-[var(--waltube-indigo)]" />
           <button
             onClick={(event) => {
               event.stopPropagation();
               navigate(`/prompt/${prompt.forkedFromId}`);
             }}
-            className="font-accent text-xs text-[var(--cuerate-indigo)] hover:underline"
+            className="font-accent text-xs text-[var(--waltube-indigo)] hover:underline"
             title={`Open parent prompt from @${prompt.forkedFromAuthorHandle}`}
           >
             Forked from @{displayForkedFromHandle}
@@ -202,7 +204,7 @@ export function PromptCard({
 
       {/* Media Thumbnail */}
       <div
-        className="relative mb-3 rounded-[var(--cuerate-r-sm)] overflow-hidden group w-full cursor-pointer transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(37,99,235,0.25)]"
+        className="relative mb-3 rounded-[var(--waltube-r-sm)] overflow-hidden group w-full cursor-pointer transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(37,99,235,0.25)]"
         style={{
           aspectRatio: mediaAspectRatio
         }}
@@ -235,15 +237,15 @@ export function PromptCard({
               className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors pointer-events-none"
               style={{ opacity: isHovering ? 0 : 1 }}
             >
-              <div className="w-16 h-16 rounded-full border-4 border-[var(--cuerate-blue)] flex items-center justify-center blue-glow">
-                <Play className="w-6 h-6 text-[var(--cuerate-blue)] fill-[var(--cuerate-blue)] ml-1" />
+              <div className="w-16 h-16 rounded-full border-4 border-[var(--waltube-blue)] flex items-center justify-center blue-glow">
+                <Play className="w-6 h-6 text-[var(--waltube-blue)] fill-[var(--waltube-blue)] ml-1" />
               </div>
             </div>
           </>
         )}
 
         {/* AI Model Logo Badge - TOP LEFT */}
-        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 h-5 sm:h-6 px-2 sm:px-2.5 rounded-[var(--cuerate-r-pill)] glass-surface border border-white/20 backdrop-blur-md flex items-center gap-1 sm:gap-1.5 pointer-events-none">
+        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 h-5 sm:h-6 px-2 sm:px-2.5 rounded-[var(--waltube-r-pill)] glass-surface border border-white/20 backdrop-blur-md flex items-center gap-1 sm:gap-1.5 pointer-events-none">
           {aiModel.logoUrl ? (
             <img src={aiModel.logoUrl} alt={aiModel.name} className="h-3 sm:h-4 w-auto" />
           ) : (
@@ -257,12 +259,12 @@ export function PromptCard({
 
       {/* Prompt Text Box */}
       <div
-        className="w-full mb-3 p-4 rounded-[var(--cuerate-r-md)] bg-[var(--cuerate-indigo)]/5 border border-[var(--cuerate-indigo)]/20 hover:border-[var(--cuerate-indigo)]/40 transition-colors text-left cursor-pointer"
+        className="w-full mb-3 p-4 rounded-[var(--waltube-r-md)] bg-[var(--waltube-indigo)]/5 border border-[var(--waltube-indigo)]/20 hover:border-[var(--waltube-indigo)]/40 transition-colors text-left cursor-pointer"
       >
-        <p className="font-accent text-sm sm:text-base text-[var(--cuerate-text-2)] leading-relaxed">
+        <p className="font-accent text-sm sm:text-base text-[var(--waltube-text-2)] leading-relaxed">
           {displayPrompt}
           {isTruncated && (
-            <span className="text-[var(--cuerate-indigo)] font-medium ml-1">more</span>
+            <span className="text-[var(--waltube-indigo)] font-medium ml-1">more</span>
           )}
         </p>
       </div>
@@ -272,7 +274,7 @@ export function PromptCard({
         {prompt.styleTags.map((tag) => (
           <span
             key={tag}
-            className="px-3 py-1 rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-blue)]/10 font-accent text-sm text-[var(--cuerate-blue)]"
+            className="px-3 py-1 rounded-[var(--waltube-r-pill)] bg-[var(--waltube-blue)]/10 font-accent text-sm text-[var(--waltube-blue)]"
           >
             #{tag}
           </span>
@@ -286,7 +288,7 @@ export function PromptCard({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(event) => event.stopPropagation()}
-          className="inline-flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-[var(--cuerate-r-sm)] bg-[var(--cuerate-indigo)]/10 border border-[var(--cuerate-indigo)]/20 text-[var(--cuerate-indigo)] font-accent text-xs hover:bg-[var(--cuerate-indigo)]/20 transition-all"
+          className="inline-flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-[var(--waltube-r-sm)] bg-[var(--waltube-indigo)]/10 border border-[var(--waltube-indigo)]/20 text-[var(--waltube-indigo)] font-accent text-xs hover:bg-[var(--waltube-indigo)]/20 transition-all"
         >
           <Shield className="w-3 h-3" />
           <span>Verified on Sui</span>
@@ -301,10 +303,10 @@ export function PromptCard({
             event.stopPropagation();
             onLike?.(prompt.id);
           }}
-          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
+          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--waltube-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
             isLiked
               ? 'bg-red-500/10 text-red-500 border border-red-500/30'
-              : 'glass-surface text-[var(--cuerate-text-2)] hover:text-red-400 hover:border-red-400/30'
+              : 'glass-surface text-[var(--waltube-text-2)] hover:text-red-400 hover:border-red-400/30'
           }`}
         >
           <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500' : ''}`} />
@@ -316,13 +318,13 @@ export function PromptCard({
             event.stopPropagation();
             onSave?.(prompt.id);
           }}
-          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
+          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--waltube-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
             isSaved
-              ? 'bg-[var(--cuerate-indigo)]/10 text-[var(--cuerate-indigo)] border border-[var(--cuerate-indigo)]/30'
-              : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-indigo)] hover:border-[var(--cuerate-indigo)]/30'
+              ? 'bg-[var(--waltube-indigo)]/10 text-[var(--waltube-indigo)] border border-[var(--waltube-indigo)]/30'
+              : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-indigo)] hover:border-[var(--waltube-indigo)]/30'
           }`}
         >
-          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-[var(--cuerate-indigo)]' : ''}`} />
+          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-[var(--waltube-indigo)]' : ''}`} />
           <span>Save</span>
         </button>
 
@@ -331,7 +333,7 @@ export function PromptCard({
             event.stopPropagation();
             onFork?.(prompt.id);
           }}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--cuerate-r-pill)] glass-surface text-[var(--cuerate-text-2)] hover:text-[#4cce8a] hover:border-[#4cce8a]/30 font-accent text-sm font-medium transition-all min-h-[44px]"
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--waltube-r-pill)] glass-surface text-[var(--waltube-text-2)] hover:text-[#4cce8a] hover:border-[#4cce8a]/30 font-accent text-sm font-medium transition-all min-h-[44px]"
         >
           <GitFork className="w-4 h-4" />
           <span>Fork</span>
@@ -342,10 +344,10 @@ export function PromptCard({
             event.stopPropagation();
             void handleCopy();
           }}
-          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
+          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--waltube-r-pill)] font-accent text-sm font-medium transition-all min-h-[44px] ${
             copiedState
               ? 'bg-[#4cce8a] text-white border border-[#4cce8a]'
-              : 'bg-[var(--cuerate-indigo)] text-white indigo-glow hover:opacity-90 border border-transparent'
+              : 'bg-[var(--waltube-indigo)] text-white indigo-glow hover:opacity-90 border border-transparent'
           }`}
         >
           {copiedState ? (

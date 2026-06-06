@@ -463,8 +463,8 @@ export function Post() {
   if (authIsLoading && !activeUser) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="max-w-md w-full glass-surface rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] p-8 text-center">
-          <span className="inline-flex items-center gap-2 font-accent text-sm text-[var(--cuerate-text-2)]">
+        <div className="max-w-md w-full glass-surface rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] p-8 text-center">
+          <span className="inline-flex items-center gap-2 font-accent text-sm text-[var(--waltube-text-2)]">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading your account...
           </span>
@@ -476,14 +476,14 @@ export function Post() {
   if (!activeUser) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="max-w-md w-full glass-surface rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] p-8 text-center">
-          <h1 className="font-primary font-bold text-2xl text-[var(--cuerate-text-1)] mb-3">Log in to post</h1>
-          <p className="font-accent text-sm text-[var(--cuerate-text-2)] mb-6">
+        <div className="max-w-md w-full glass-surface rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] p-8 text-center">
+          <h1 className="font-primary font-bold text-2xl text-[var(--waltube-text-1)] mb-3">Log in to post</h1>
+          <p className="font-accent text-sm text-[var(--waltube-text-2)] mb-6">
             Publishing prompts and workflows needs an authenticated session.
           </p>
           <button
             onClick={() => navigate('/auth')}
-            className="w-full rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow"
+            className="w-full rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow"
           >
             Go to Login
           </button>
@@ -494,16 +494,16 @@ export function Post() {
 
   return (
     <div className="min-h-screen pb-8">
-      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--cuerate-text-3)]">
+      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--waltube-text-3)]">
         <div className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6">
-          <h1 className="font-primary font-semibold text-lg md:text-2xl text-[var(--cuerate-text-1)]">
+          <h1 className="font-primary font-semibold text-lg md:text-2xl text-[var(--waltube-text-1)]">
             New Post
           </h1>
           <button
             onClick={() => navigate('/')}
-            className="p-2 rounded-full hover:bg-[var(--cuerate-surface)] transition-colors"
+            className="p-2 rounded-full hover:bg-[var(--waltube-surface)] transition-colors"
           >
-            <X className="w-5 h-5 text-[var(--cuerate-text-1)]" />
+            <X className="w-5 h-5 text-[var(--waltube-text-1)]" />
           </button>
         </div>
       </div>
@@ -518,12 +518,12 @@ export function Post() {
                   setPostMode(entry);
                   setPublishError(null);
                 }}
-                className={`px-4 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm transition-all ${
+                className={`px-4 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm transition-all ${
                   postMode === entry
                     ? entry === 'workflow'
                       ? 'bg-[#f5a623] text-[#1b1205] shadow-[0_0_24px_rgba(245,166,35,0.28)]'
-                      : 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                    : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                      : 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                    : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                 }`}
               >
                 {entry === 'prompt' ? 'Single Prompt' : 'Workflow'}
@@ -535,7 +535,7 @@ export function Post() {
         {postMode === 'prompt' ? (
           <>
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">Post Type</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">Post Type</label>
               <div className="flex flex-wrap gap-2">
                 {(['image', 'video'] as const).map((entry) => (
                   <button
@@ -546,10 +546,10 @@ export function Post() {
                       setSelectedModel(entry === 'image' ? IMAGE_ONLY_MODEL : '');
                       setPublishError(null);
                     }}
-                    className={`px-4 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm transition-all ${
+                    className={`px-4 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm transition-all ${
                       contentType === entry
-                        ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                        : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                        ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                        : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                     }`}
                   >
                     {entry === 'image' ? 'Image Prompt' : 'Video Prompt'}
@@ -559,40 +559,57 @@ export function Post() {
             </div>
 
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">
                 {contentType === 'video' ? 'Video Upload' : 'Image Upload'}
               </label>
-              <label className="border-2 border-dashed border-[var(--cuerate-indigo)]/30 rounded-[var(--cuerate-r-xl)] glass-surface p-8 flex flex-col items-center justify-center gap-3 hover:border-[var(--cuerate-indigo)]/50 transition-colors cursor-pointer">
+              <label className="relative border-2 border-dashed border-[var(--waltube-indigo)]/30 rounded-[var(--waltube-r-xl)] glass-surface p-8 flex flex-col items-center justify-center gap-3 hover:border-[var(--waltube-indigo)]/50 transition-colors cursor-pointer overflow-hidden min-h-[180px]">
                 <input
                   type="file"
                   accept={contentType === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/*'}
-                  className="hidden"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   onChange={(event) => {
                     setMediaFile(event.target.files?.[0] ?? null);
                     setPublishError(null);
                   }}
                 />
-                <Upload className="w-8 h-8 text-[var(--cuerate-indigo)]" />
-                <p className="font-accent text-sm text-[var(--cuerate-text-1)]">
-                  {mediaFile ? mediaFile.name : contentType === 'video' ? 'Upload Video' : 'Upload Image'}
-                </p>
+                {mediaFile && contentType === 'image' && (
+                  <img
+                    src={URL.createObjectURL(mediaFile)}
+                    alt="Preview"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                {mediaFile && contentType === 'video' && (
+                  <video
+                    src={URL.createObjectURL(mediaFile)}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    muted
+                    playsInline
+                  />
+                )}
+                <div className={`flex flex-col items-center justify-center gap-3 ${mediaFile ? 'opacity-0' : ''}`}>
+                  <Upload className="w-8 h-8 text-[var(--waltube-indigo)]" />
+                  <p className="font-accent text-sm text-[var(--waltube-text-1)]">
+                    {mediaFile ? mediaFile.name : contentType === 'video' ? 'Upload Video' : 'Upload Image'}
+                  </p>
+                </div>
               </label>
             </div>
 
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">Your Prompt</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">Your Prompt</label>
               <textarea
                 value={promptText}
                 onChange={(event) => setPromptText(event.target.value)}
                 placeholder="Describe your AI prompt in detail..."
-                className="w-full h-32 px-4 py-3 rounded-[var(--cuerate-r-md)] glass-surface border border-[var(--cuerate-text-3)] focus:border-[var(--cuerate-indigo)] focus:indigo-glow outline-none font-accent text-sm text-[var(--cuerate-text-1)] placeholder:text-[var(--cuerate-text-2)] resize-none transition-all"
+                className="w-full h-32 px-4 py-3 rounded-[var(--waltube-r-md)] glass-surface border border-[var(--waltube-text-3)] focus:border-[var(--waltube-indigo)] focus:indigo-glow outline-none font-accent text-sm text-[var(--waltube-text-1)] placeholder:text-[var(--waltube-text-2)] resize-none transition-all"
               />
             </div>
 
             <button
               onClick={handleAutoFill}
               disabled={isAutoFilling || !promptText}
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-[var(--cuerate-r-pill)] bg-gradient-to-r from-[var(--cuerate-indigo)] to-[var(--cuerate-blue)] text-white font-accent font-medium indigo-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-[var(--waltube-r-pill)] bg-gradient-to-r from-[var(--waltube-indigo)] to-[var(--waltube-blue)] text-white font-accent font-medium indigo-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isAutoFilling ? (
                 <>
@@ -608,16 +625,16 @@ export function Post() {
             </button>
 
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">Model</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">Model</label>
               <div className="flex flex-wrap gap-2">
                 {promptModelOptions.map((model) => (
                   <button
                     key={model}
                     onClick={() => setSelectedModel(model)}
-                    className={`px-4 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm transition-all ${
+                    className={`px-4 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm transition-all ${
                       selectedModel === model
-                        ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                        : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                        ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                        : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                     }`}
                   >
                     {model}
@@ -627,16 +644,16 @@ export function Post() {
             </div>
 
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">Style Tags</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">Style Tags</label>
               <div className="flex flex-wrap gap-2">
                 {availableStyleTags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}
-                    className={`px-4 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm transition-all ${
+                    className={`px-4 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm transition-all ${
                       selectedTags.includes(tag)
-                        ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                        : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                        ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                        : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                     }`}
                   >
                     #{tag}
@@ -646,27 +663,27 @@ export function Post() {
             </div>
 
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">Camera Notes</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">Camera Notes</label>
               <input
                 type="text"
                 value={cameraNotes}
                 onChange={(event) => setCameraNotes(event.target.value)}
                 placeholder="anamorphic, wide angle, slow push-in..."
-                className="w-full px-4 py-3 rounded-[var(--cuerate-r-md)] glass-surface border border-[var(--cuerate-text-3)] focus:border-[var(--cuerate-indigo)] focus:indigo-glow outline-none font-accent text-sm text-[var(--cuerate-text-1)] placeholder:text-[var(--cuerate-text-2)] transition-all"
+                className="w-full px-4 py-3 rounded-[var(--waltube-r-md)] glass-surface border border-[var(--waltube-text-3)] focus:border-[var(--waltube-indigo)] focus:indigo-glow outline-none font-accent text-sm text-[var(--waltube-text-1)] placeholder:text-[var(--waltube-text-2)] transition-all"
               />
             </div>
 
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">Mood</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">Mood</label>
               <div className="flex flex-wrap gap-2">
                 {availableMoodLabels.map((mood) => (
                   <button
                     key={mood}
                     onClick={() => setSelectedMood(mood)}
-                    className={`px-4 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm transition-all ${
+                    className={`px-4 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm transition-all ${
                       selectedMood === mood
-                        ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                        : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                        ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                        : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                     }`}
                   >
                     {mood}
@@ -676,16 +693,16 @@ export function Post() {
             </div>
 
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">Difficulty</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">Difficulty</label>
               <div className="flex flex-wrap gap-2">
                 {difficultyLevels.map((level) => (
                   <button
                     key={level}
                     onClick={() => setSelectedDifficulty(level)}
-                    className={`px-4 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm transition-all ${
+                    className={`px-4 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm transition-all ${
                       selectedDifficulty === level
-                        ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                        : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                        ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                        : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                     }`}
                   >
                     {level}
@@ -695,25 +712,35 @@ export function Post() {
             </div>
           </>
         ) : (
-          <div className="space-y-6 rounded-[var(--cuerate-r-xl)] border border-[#f5a623]/25 bg-[linear-gradient(180deg,rgba(245,166,35,0.12),rgba(245,166,35,0.04))] p-5">
+          <div className="space-y-6 rounded-[var(--waltube-r-xl)] border border-[#f5a623]/25 bg-[linear-gradient(180deg,rgba(245,166,35,0.12),rgba(245,166,35,0.04))] p-5">
             <div>
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 block">
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 block">
                 Final Result (Video)
               </label>
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[var(--cuerate-r-xl)] border-2 border-dashed border-[#f5a623]/30 bg-black/10 p-6 transition-colors hover:border-[#f5a623]/55">
+              <label className="relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[var(--waltube-r-xl)] border-2 border-dashed border-[#f5a623]/30 bg-black/10 p-6 transition-colors hover:border-[#f5a623]/55 overflow-hidden min-h-[180px]">
                 <input
                   type="file"
                   accept="video/mp4,video/quicktime,video/webm"
-                  className="hidden"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   onChange={(event) => {
                     setWorkflowCoverFile(event.target.files?.[0] ?? null);
                     setPublishError(null);
                   }}
                 />
-                <Upload className="h-8 w-8 text-[#f5a623]" />
-                <p className="font-accent text-sm text-[var(--cuerate-text-1)]">
-                  {workflowCoverFile ? workflowCoverFile.name : 'Upload final result video'}
-                </p>
+                {workflowCoverFile && (
+                  <video
+                    src={URL.createObjectURL(workflowCoverFile)}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    muted
+                    playsInline
+                  />
+                )}
+                <div className={`flex flex-col items-center justify-center gap-3 ${workflowCoverFile ? 'opacity-0' : ''}`}>
+                  <Upload className="h-8 w-8 text-[#f5a623]" />
+                  <p className="font-accent text-sm text-[var(--waltube-text-1)]">
+                    {workflowCoverFile ? workflowCoverFile.name : 'Upload final result video'}
+                  </p>
+                </div>
               </label>
             </div>
 
@@ -722,27 +749,27 @@ export function Post() {
               value={workflowTitle}
               onChange={(event) => setWorkflowTitle(event.target.value)}
               placeholder="Workflow title"
-              className="w-full rounded-[var(--cuerate-r-md)] border border-[#f5a623]/20 bg-black/15 px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none transition-all focus:border-[#f5a623]"
+              className="w-full rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/15 px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none transition-all focus:border-[#f5a623]"
             />
 
             <textarea
               value={workflowDescription}
               onChange={(event) => setWorkflowDescription(event.target.value)}
               placeholder="Workflow description"
-              className="h-24 w-full rounded-[var(--cuerate-r-md)] border border-[#f5a623]/20 bg-black/15 px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none transition-all focus:border-[#f5a623]"
+              className="h-24 w-full rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/15 px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none transition-all focus:border-[#f5a623]"
             />
 
             <div className="space-y-3">
-              <label className="font-accent text-sm text-[var(--cuerate-text-1)] block">Tags</label>
+              <label className="font-accent text-sm text-[var(--waltube-text-1)] block">Tags</label>
               <div className="flex flex-wrap gap-2">
                 {availableStyleTags.map((tag) => (
                   <button
                     key={`workflow-tag-${tag}`}
                     onClick={() => toggleWorkflowTag(tag)}
-                    className={`rounded-[var(--cuerate-r-pill)] px-4 py-2 font-accent text-sm transition-all ${
+                    className={`rounded-[var(--waltube-r-pill)] px-4 py-2 font-accent text-sm transition-all ${
                       workflowTags.includes(tag)
                         ? 'bg-[#f5a623] text-[#1b1205] shadow-[0_0_24px_rgba(245,166,35,0.28)]'
-                        : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                        : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                     }`}
                   >
                     #{tag}
@@ -750,7 +777,7 @@ export function Post() {
                 ))}
               </div>
 
-              <p className="font-accent text-xs text-[var(--cuerate-text-2)]">
+              <p className="font-accent text-xs text-[var(--waltube-text-2)]">
                 Choose model per step below.
               </p>
             </div>
@@ -767,7 +794,7 @@ export function Post() {
                 return (
                   <div
                     key={step.id}
-                    className={`rounded-[var(--cuerate-r-lg)] border border-[#f5a623]/18 bg-black/12 p-4 space-y-3 ${
+                    className={`rounded-[var(--waltube-r-lg)] border border-[#f5a623]/18 bg-black/12 p-4 space-y-3 ${
                       index > 0 ? 'mt-6 pt-6 border-t-2 border-t-[#f5a623]/28' : ''
                     }`}
                   >
@@ -778,7 +805,7 @@ export function Post() {
                       {workflowSteps.length > 1 && (
                         <button
                           onClick={() => removeWorkflowStep(step.id)}
-                          className="rounded-[var(--cuerate-r-pill)] border border-red-400/30 px-3 py-1 font-accent text-xs text-red-300 hover:bg-red-500/10"
+                          className="rounded-[var(--waltube-r-pill)] border border-red-400/30 px-3 py-1 font-accent text-xs text-red-300 hover:bg-red-500/10"
                         >
                           Remove
                         </button>
@@ -790,20 +817,20 @@ export function Post() {
                       value={step.label}
                       onChange={(event) => updateWorkflowStep(step.id, { label: event.target.value })}
                       placeholder="Step label"
-                      className="w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-black/15 px-3 py-2 font-accent text-sm text-[var(--cuerate-text-1)]"
+                      className="w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-black/15 px-3 py-2 font-accent text-sm text-[var(--waltube-text-1)]"
                     />
 
                     <div>
-                      <label className="mb-2 block font-accent text-xs text-[var(--cuerate-text-2)]">Model</label>
+                      <label className="mb-2 block font-accent text-xs text-[var(--waltube-text-2)]">Model</label>
                       <div className="flex flex-wrap gap-2">
                         {stepModelOptions.map((model) => (
                           <button
                             key={`${step.id}-model-${model}`}
                             onClick={() => updateWorkflowStep(step.id, { model })}
-                            className={`rounded-[var(--cuerate-r-pill)] px-3 py-1.5 font-accent text-xs transition-all ${
+                            className={`rounded-[var(--waltube-r-pill)] px-3 py-1.5 font-accent text-xs transition-all ${
                               step.model === model
                                 ? 'bg-[#f5a623] text-[#1b1205]'
-                                : 'glass-surface text-[var(--cuerate-text-2)]'
+                                : 'glass-surface text-[var(--waltube-text-2)]'
                             }`}
                           >
                             {model}
@@ -817,10 +844,10 @@ export function Post() {
                         <button
                           key={`${step.id}-${option.value}`}
                           onClick={() => handleWorkflowGenerationType(step.id, option.value)}
-                          className={`rounded-[var(--cuerate-r-pill)] px-3 py-1.5 font-accent text-xs transition-all ${
+                          className={`rounded-[var(--waltube-r-pill)] px-3 py-1.5 font-accent text-xs transition-all ${
                             step.generationType === option.value
                               ? 'bg-[#f5a623] text-[#1b1205]'
-                              : 'glass-surface text-[var(--cuerate-text-2)]'
+                              : 'glass-surface text-[var(--waltube-text-2)]'
                           }`}
                         >
                           {option.label}
@@ -830,16 +857,16 @@ export function Post() {
 
                     {step.generationType === 'ingredients' && (
                       <div>
-                        <label className="mb-2 block font-accent text-xs text-[var(--cuerate-text-2)]">Ingredients Output</label>
+                        <label className="mb-2 block font-accent text-xs text-[var(--waltube-text-2)]">Ingredients Output</label>
                         <div className="flex flex-wrap gap-2">
                           {(['video', 'image'] as const).map((option) => (
                             <button
                               key={`${step.id}-ingredient-output-${option}`}
                               onClick={() => handleIngredientOutputType(step.id, option)}
-                              className={`rounded-[var(--cuerate-r-pill)] px-3 py-1.5 font-accent text-xs transition-all ${
+                              className={`rounded-[var(--waltube-r-pill)] px-3 py-1.5 font-accent text-xs transition-all ${
                                 step.ingredientOutputType === option
                                   ? 'bg-[#f5a623] text-[#1b1205]'
-                                  : 'glass-surface text-[var(--cuerate-text-2)]'
+                                  : 'glass-surface text-[var(--waltube-text-2)]'
                               }`}
                             >
                               {option === 'video' ? 'Video Output' : 'Image Output'}
@@ -853,92 +880,105 @@ export function Post() {
                       value={step.promptText}
                       onChange={(event) => updateWorkflowStep(step.id, { promptText: event.target.value })}
                       placeholder="Prompt text"
-                      className="h-20 w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-black/15 px-3 py-2 font-accent text-sm text-[var(--cuerate-text-1)]"
+                      className="h-20 w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-black/15 px-3 py-2 font-accent text-sm text-[var(--waltube-text-1)]"
                     />
 
                     {step.generationType === 'image_to_video' && (
-                      <label className="flex cursor-pointer items-center justify-between rounded-[var(--cuerate-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors">
-                        <span className="font-accent text-sm text-[var(--cuerate-text-2)]">
-                          {step.inputImageFile ? step.inputImageFile.name : 'Upload source image'}
-                        </span>
-                        <Upload className="h-4 w-4 text-[#ffd27c]" />
+                      <label className="relative flex cursor-pointer items-center justify-between rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors overflow-hidden min-h-[44px]">
+                        {step.inputImageFile && (
+                          <img
+                            src={URL.createObjectURL(step.inputImageFile)}
+                            alt="Preview"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        )}
                         <input
                           type="file"
                           accept="image/*"
-                          className="hidden"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           onChange={(event) => updateWorkflowStep(step.id, { inputImageFile: event.target.files?.[0] ?? null })}
                         />
+                        <span className={`font-accent text-sm text-[var(--waltube-text-2)] ${step.inputImageFile ? 'opacity-0' : ''}`}>
+                          {step.inputImageFile ? step.inputImageFile.name : 'Upload source image'}
+                        </span>
+                        <Upload className={`h-4 w-4 text-[#ffd27c] ${step.inputImageFile ? 'opacity-0' : ''}`} />
                       </label>
                     )}
 
                     {step.generationType === 'frames_to_video' && (
                       <div className="grid md:grid-cols-2 gap-2">
-                        <label className="flex cursor-pointer items-center justify-between rounded-[var(--cuerate-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors">
-                          <span className="font-accent text-sm text-[var(--cuerate-text-2)]">
-                            {step.startFrameFile ? step.startFrameFile.name : 'Upload start frame'}
-                          </span>
-                          <Upload className="h-4 w-4 text-[#ffd27c]" />
+                        <label className="relative flex cursor-pointer items-center justify-between rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors overflow-hidden min-h-[44px]">
+                          {step.startFrameFile && (
+                            <img src={URL.createObjectURL(step.startFrameFile)} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                          )}
                           <input
                             type="file"
                             accept="image/*"
-                            className="hidden"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             onChange={(event) => updateWorkflowStep(step.id, { startFrameFile: event.target.files?.[0] ?? null })}
                           />
-                        </label>
-                        <label className="flex cursor-pointer items-center justify-between rounded-[var(--cuerate-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors">
-                          <span className="font-accent text-sm text-[var(--cuerate-text-2)]">
-                            {step.endFrameFile ? step.endFrameFile.name : 'Upload end frame'}
+                          <span className={`font-accent text-sm text-[var(--waltube-text-2)] ${step.startFrameFile ? 'opacity-0' : ''}`}>
+                            {step.startFrameFile ? step.startFrameFile.name : 'Upload start frame'}
                           </span>
-                          <Upload className="h-4 w-4 text-[#ffd27c]" />
+                          <Upload className={`h-4 w-4 text-[#ffd27c] ${step.startFrameFile ? 'opacity-0' : ''}`} />
+                        </label>
+                        <label className="relative flex cursor-pointer items-center justify-between rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors overflow-hidden min-h-[44px]">
+                          {step.endFrameFile && (
+                            <img src={URL.createObjectURL(step.endFrameFile)} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                          )}
                           <input
                             type="file"
                             accept="image/*"
-                            className="hidden"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             onChange={(event) => updateWorkflowStep(step.id, { endFrameFile: event.target.files?.[0] ?? null })}
                           />
+                          <span className={`font-accent text-sm text-[var(--waltube-text-2)] ${step.endFrameFile ? 'opacity-0' : ''}`}>
+                            {step.endFrameFile ? step.endFrameFile.name : 'Upload end frame'}
+                          </span>
+                          <Upload className={`h-4 w-4 text-[#ffd27c] ${step.endFrameFile ? 'opacity-0' : ''}`} />
                         </label>
                       </div>
                     )}
 
                     {step.generationType === 'ingredients' && (
                       <div className="space-y-2">
-                        <label className="mb-1 block font-accent text-xs text-[var(--cuerate-text-2)]">
+                        <label className="mb-1 block font-accent text-xs text-[var(--waltube-text-2)]">
                           Ingredients (up to {MAX_INGREDIENTS} images)
                         </label>
-                        <label className="flex cursor-pointer items-center justify-between rounded-[var(--cuerate-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors">
-                          <span className="font-accent text-sm text-[var(--cuerate-text-2)]">
-                            {step.ingredientFiles.length > 0
-                              ? `${step.ingredientFiles.length} ingredient image${step.ingredientFiles.length > 1 ? 's' : ''} selected`
-                              : 'Upload ingredient images'}
-                          </span>
-                          <Upload className="h-4 w-4 text-[#ffd27c]" />
+                        <label className="relative flex cursor-pointer items-center justify-between rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors">
                           <input
                             type="file"
                             accept="image/*"
                             multiple
-                            className="hidden"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             onChange={(event) => {
                               const chosen = Array.from(event.target.files ?? []);
                               const nextFiles = [...step.ingredientFiles, ...chosen].slice(0, MAX_INGREDIENTS);
                               updateWorkflowStep(step.id, { ingredientFiles: nextFiles });
                             }}
                           />
+                          <span className="font-accent text-sm text-[var(--waltube-text-2)]">
+                            {step.ingredientFiles.length > 0
+                              ? `${step.ingredientFiles.length} ingredient image${step.ingredientFiles.length > 1 ? 's' : ''} selected`
+                              : 'Upload ingredient images'}
+                          </span>
+                          <Upload className="h-4 w-4 text-[#ffd27c]" />
                         </label>
                         {step.ingredientFiles.length > 0 && (
                           <div className="space-y-1">
                             {step.ingredientFiles.map((file, ingredientIndex) => (
                               <div
                                 key={`${step.id}-ingredient-${ingredientIndex}-${file.name}`}
-                                className="flex items-center justify-between rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-black/15 px-3 py-2"
+                                className="flex items-center justify-between rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-black/15 px-3 py-2"
                               >
-                                <span className="truncate font-accent text-xs text-[var(--cuerate-text-2)]">{file.name}</span>
+                                <span className="truncate font-accent text-xs text-[var(--waltube-text-2)]">{file.name}</span>
                                 <button
                                   onClick={() =>
                                     updateWorkflowStep(step.id, {
                                       ingredientFiles: step.ingredientFiles.filter((_, fileIndex) => fileIndex !== ingredientIndex),
                                     })
                                   }
-                                  className="rounded-[var(--cuerate-r-pill)] border border-red-400/25 px-2 py-0.5 font-accent text-[10px] text-red-300 hover:bg-red-500/10"
+                                  className="rounded-[var(--waltube-r-pill)] border border-red-400/25 px-2 py-0.5 font-accent text-[10px] text-red-300 hover:bg-red-500/10"
                                 >
                                   Remove
                                 </button>
@@ -949,28 +989,34 @@ export function Post() {
                       </div>
                     )}
 
-                    <label className="flex cursor-pointer items-center justify-between rounded-[var(--cuerate-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors">
-                      <span className="font-accent text-sm text-[var(--cuerate-text-2)]">
+                    <label className="relative flex cursor-pointer items-center justify-between rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/20 px-3 py-2.5 hover:border-[#f5a623]/45 transition-colors overflow-hidden min-h-[44px]">
+                      {step.resultMediaFile && expectedType === 'image' && (
+                        <img src={URL.createObjectURL(step.resultMediaFile)} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                      )}
+                      {step.resultMediaFile && expectedType === 'video' && (
+                        <video src={URL.createObjectURL(step.resultMediaFile)} className="absolute inset-0 w-full h-full object-cover" muted playsInline />
+                      )}
+                      <input
+                        type="file"
+                        accept={expectedType === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/*'}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        onChange={(event) => updateWorkflowStep(step.id, { resultMediaFile: event.target.files?.[0] ?? null })}
+                      />
+                      <span className={`font-accent text-sm text-[var(--waltube-text-2)] ${step.resultMediaFile ? 'opacity-0' : ''}`}>
                         {step.resultMediaFile
                           ? step.resultMediaFile.name
                           : expectedType === 'video'
                             ? 'Upload Video Results'
                             : 'Upload Image Results'}
                       </span>
-                      <Upload className="h-4 w-4 text-[#ffd27c]" />
-                      <input
-                        type="file"
-                        accept={expectedType === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/*'}
-                        className="hidden"
-                        onChange={(event) => updateWorkflowStep(step.id, { resultMediaFile: event.target.files?.[0] ?? null })}
-                      />
+                      <Upload className={`h-4 w-4 text-[#ffd27c] ${step.resultMediaFile ? 'opacity-0' : ''}`} />
                     </label>
 
                     <textarea
                       value={step.note}
                       onChange={(event) => updateWorkflowStep(step.id, { note: event.target.value })}
                       placeholder="Side note (optional)"
-                      className="h-16 w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-black/15 px-3 py-2 font-accent text-sm text-[var(--cuerate-text-1)]"
+                      className="h-16 w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-black/15 px-3 py-2 font-accent text-sm text-[var(--waltube-text-1)]"
                     />
                   </div>
                 );
@@ -987,7 +1033,7 @@ export function Post() {
         )}
 
         {publishError && (
-          <div className="rounded-[var(--cuerate-r-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 font-accent text-sm text-red-200">
+          <div className="rounded-[var(--waltube-r-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 font-accent text-sm text-red-200">
             {publishError}
           </div>
         )}
@@ -995,7 +1041,7 @@ export function Post() {
         <button
           onClick={() => void handlePublish()}
           disabled={isPublishing || (postMode === 'workflow' ? !workflowCanPublish : !promptCanPublish)}
-          className="w-full py-4 rounded-[var(--cuerate-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--cuerate-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 rounded-[var(--waltube-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--waltube-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPublishing ? (
             <span className="inline-flex items-center gap-2">

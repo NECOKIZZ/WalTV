@@ -20,8 +20,8 @@ export function PromptDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen px-4 py-10 md:px-8">
-        <div className="mx-auto max-w-3xl rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] p-8 text-center">
-          <p className="font-primary text-2xl text-[var(--cuerate-text-1)]">Loading prompt...</p>
+        <div className="mx-auto max-w-3xl rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] p-8 text-center">
+          <p className="font-primary text-2xl text-[var(--waltube-text-1)]">Loading prompt...</p>
         </div>
       </div>
     );
@@ -30,11 +30,11 @@ export function PromptDetail() {
   if (!prompt) {
     return (
       <div className="min-h-screen px-4 py-10 md:px-8">
-        <div className="mx-auto max-w-3xl rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] p-8 text-center">
-          <p className="font-primary text-2xl text-[var(--cuerate-text-1)]">Prompt not found</p>
+        <div className="mx-auto max-w-3xl rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] p-8 text-center">
+          <p className="font-primary text-2xl text-[var(--waltube-text-1)]">Prompt not found</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-6 rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-indigo)] px-5 py-3 font-accent text-sm font-medium text-white"
+            className="mt-6 rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)] px-5 py-3 font-accent text-sm font-medium text-white"
           >
             Back to feed
           </button>
@@ -94,7 +94,7 @@ export function PromptDetail() {
           <img
             src={prompt.authorAvatar}
             alt={prompt.authorHandle}
-            className="h-6 w-6 rounded-full border border-[var(--cuerate-indigo)] object-cover object-center"
+            className="h-6 w-6 rounded-full border border-[var(--waltube-indigo)] object-cover object-center"
           />
           <span className="max-w-[120px] truncate font-accent text-xs text-white md:max-w-[160px]">
             @{displayAuthorHandle}
@@ -103,7 +103,7 @@ export function PromptDetail() {
       </div>
 
       <div className="absolute right-3 top-3 z-10 flex items-center gap-2 md:right-4 md:top-4">
-        <div className="h-7 rounded-[var(--cuerate-r-pill)] border border-white/20 bg-black/45 px-2.5 backdrop-blur-sm flex items-center gap-1.5">
+        <div className="h-7 rounded-[var(--waltube-r-pill)] border border-white/20 bg-black/45 px-2.5 backdrop-blur-sm flex items-center gap-1.5">
           {aiModel.logoUrl ? (
             <img src={aiModel.logoUrl} alt={aiModel.name} className="h-4 w-auto" />
           ) : (
@@ -114,7 +114,7 @@ export function PromptDetail() {
         </div>
         <button
           onClick={() => setIsPromptVisible((current) => !current)}
-          className="inline-flex items-center gap-1.5 rounded-[var(--cuerate-r-pill)] border border-white/20 bg-black/55 px-2.5 py-1.5 font-accent text-[10px] text-white backdrop-blur-md transition-colors hover:bg-black/70 md:px-3 md:text-xs"
+          className="inline-flex items-center gap-1.5 rounded-[var(--waltube-r-pill)] border border-white/20 bg-black/55 px-2.5 py-1.5 font-accent text-[10px] text-white backdrop-blur-md transition-colors hover:bg-black/70 md:px-3 md:text-xs"
         >
           {isPromptVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
           <span>{isPromptVisible ? 'Hide prompt' : 'Show prompt'}</span>
@@ -123,15 +123,15 @@ export function PromptDetail() {
 
       {isPromptVisible && (
         <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-3 md:px-4 md:pb-4">
-          <div className="mx-auto w-full max-w-4xl rounded-[var(--cuerate-r-xl)] border border-white/20 bg-black/55 p-3 backdrop-blur-md md:p-4">
+          <div className="mx-auto w-full max-w-4xl rounded-[var(--waltube-r-xl)] border border-white/20 bg-black/55 p-3 backdrop-blur-md md:p-4">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="font-accent text-[10px] uppercase tracking-[0.14em] text-[var(--cuerate-text-2)] md:text-xs">
+              <span className="font-accent text-[10px] uppercase tracking-[0.14em] text-[var(--waltube-text-2)] md:text-xs">
                 {formatDistanceToNow(prompt.createdAt, { addSuffix: true })}
               </span>
               {prompt.isForked && prompt.forkedFromAuthorHandle && prompt.forkedFromId && (
                 <button
                   onClick={() => navigate(`/prompt/${prompt.forkedFromId}`)}
-                  className="inline-flex items-center gap-1 text-[10px] text-[var(--cuerate-indigo)] hover:underline md:text-xs"
+                  className="inline-flex items-center gap-1 text-[10px] text-[var(--waltube-indigo)] hover:underline md:text-xs"
                   title={`Open parent prompt from @${prompt.forkedFromAuthorHandle}`}
                 >
                   <GitFork className="h-3 w-3" />
@@ -149,7 +149,7 @@ export function PromptDetail() {
                 {prompt.styleTags.map((tag) => (
                   <span
                     key={`${prompt.id}-${tag}`}
-                    className="rounded-[var(--cuerate-r-pill)] border border-[var(--cuerate-blue)]/35 bg-[var(--cuerate-blue)]/15 px-2 py-0.5 font-accent text-[10px] text-[var(--cuerate-blue)] md:text-xs"
+                    className="rounded-[var(--waltube-r-pill)] border border-[var(--waltube-blue)]/35 bg-[var(--waltube-blue)]/15 px-2 py-0.5 font-accent text-[10px] text-[var(--waltube-blue)] md:text-xs"
                   >
                     #{tag}
                   </span>

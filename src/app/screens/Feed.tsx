@@ -6,6 +6,8 @@ import { useEnokiFlow } from '@mysten/enoki/react';
 import { PromptCard } from '../components/PromptCard';
 import { WorkflowCard } from '../components/WorkflowCard';
 import { ForkPromptModal } from '../components/ForkPromptModal';
+import { SkeletonFeedGrid } from '../components/SkeletonCard';
+import { Avatar } from '../components/Avatar';
 import { followsApi, metaApi, notificationsApi, paymentsApi, promptsApi, uploadsApi, workflowsApi } from '../../lib/backend';
 import { useAuth } from '../../lib/auth-context';
 import { createVideoThumbnailFile, detectImageFileDimensions, detectVideoFileDimensions } from '../../lib/media';
@@ -15,6 +17,7 @@ import { truncateText } from '../../lib/text';
 import {
   isAttributionConfigured,
   recordForkAttributionOnchain,
+  recordPromptAttributionOnchain,
 } from '../../lib/attribution';
 import {
   isSuiAddress,
@@ -43,8 +46,9 @@ export function Feed() {
   const [likedWorkflows, setLikedWorkflows] = useState<Set<string>>(new Set());
   const [savedWorkflows, setSavedWorkflows] = useState<Set<string>>(new Set());
 
-  const { data: prompts } = useBackendQuery(() => promptsApi.getFeedPrompts(), [], []);
-  const { data: workflows } = useBackendQuery(() => workflowsApi.getFeedWorkflows(), [], []);
+  const { data: prompts, isLoading: promptsLoading } = useBackendQuery(() => promptsApi.getFeedPrompts(), [], []);
+  const { data: workflows, isLoading: workflowsLoading } = useBackendQuery(() => workflowsApi.getFeedWorkflows(), [], []);
+  const isFeedLoading = promptsLoading || workflowsLoading;
   const { data: availableModels } = useBackendQuery(() => metaApi.getAvailableModels(), [], []);
   const { data: availableStyleTags } = useBackendQuery(() => metaApi.getAvailableStyleTags(), [], []);
   const { data: likedPromptIds } = useBackendQuery(
@@ -673,24 +677,24 @@ export function Feed() {
 
   return (
     <div className="min-h-screen">
-      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--cuerate-text-3)] md:hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--waltube-text-3)] md:hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex items-center justify-between px-3 sm:px-4 py-3 sm:py-4">
-          <span className="font-primary font-bold text-lg sm:text-xl text-[var(--cuerate-blue)]">Cuerate</span>
+          <span className="font-primary font-bold text-lg sm:text-xl text-[var(--waltube-blue)]">WalTube</span>
           <div className="flex items-center gap-1 sm:gap-2">
             <button
               onClick={() => navigate('/notifications')}
-              className="relative p-2 sm:p-2.5 rounded-full hover:bg-[var(--cuerate-surface)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="relative p-2 sm:p-2.5 rounded-full hover:bg-[var(--waltube-surface)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--cuerate-text-1)]" />
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--waltube-text-1)]" />
               {hasUnreadNotifications && (
-                <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--cuerate-blue)] blue-glow" />
+                <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--waltube-blue)] blue-glow" />
               )}
             </button>
             <button
               onClick={() => navigate('/settings')}
-              className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--cuerate-surface)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="p-2 sm:p-2.5 rounded-full hover:bg-[var(--waltube-surface)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
-              <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--cuerate-text-1)]" />
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--waltube-text-1)]" />
             </button>
           </div>
         </div>
@@ -701,10 +705,10 @@ export function Feed() {
               <button
                 key={filter}
                 onClick={() => toggleFilter(filter)}
-                className={`px-3 sm:px-4 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-xs sm:text-sm whitespace-nowrap transition-all ${
+                className={`px-3 sm:px-4 py-2 rounded-[var(--waltube-r-pill)] font-accent text-xs sm:text-sm whitespace-nowrap transition-all ${
                   isFilterSelected(filter)
-                    ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                    : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                    ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                    : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                 }`}
               >
                 {filter}
@@ -713,23 +717,23 @@ export function Feed() {
           </div>
         </div>
 
-        <div className="flex gap-1.5 sm:gap-2 px-3 sm:px-4 pb-3 border-b border-[var(--cuerate-text-3)]">
+        <div className="flex gap-1.5 sm:gap-2 px-3 sm:px-4 pb-3 border-b border-[var(--waltube-text-3)]">
           <button
             onClick={() => setContentType('all')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 sm:py-2.5 rounded-[var(--cuerate-r-pill)] font-accent text-xs sm:text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2 sm:py-2.5 rounded-[var(--waltube-r-pill)] font-accent text-xs sm:text-sm font-medium transition-all ${
               contentType === 'all'
-                ? 'bg-[var(--cuerate-blue)] text-white blue-glow'
-                : 'glass-surface text-[var(--cuerate-text-2)]'
+                ? 'bg-[var(--waltube-blue)] text-white blue-glow'
+                : 'glass-surface text-[var(--waltube-text-2)]'
             }`}
           >
             All
           </button>
           <button
             onClick={() => setContentType('video')}
-            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-[var(--cuerate-r-pill)] font-accent text-xs sm:text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-[var(--waltube-r-pill)] font-accent text-xs sm:text-sm font-medium transition-all ${
               contentType === 'video'
-                ? 'bg-[var(--cuerate-blue)] text-white blue-glow'
-                : 'glass-surface text-[var(--cuerate-text-2)]'
+                ? 'bg-[var(--waltube-blue)] text-white blue-glow'
+                : 'glass-surface text-[var(--waltube-text-2)]'
             }`}
           >
             <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -737,10 +741,10 @@ export function Feed() {
           </button>
           <button
             onClick={() => setContentType('image')}
-            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-[var(--cuerate-r-pill)] font-accent text-xs sm:text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-[var(--waltube-r-pill)] font-accent text-xs sm:text-sm font-medium transition-all ${
               contentType === 'image'
-                ? 'bg-[var(--cuerate-blue)] text-white blue-glow'
-                : 'glass-surface text-[var(--cuerate-text-2)]'
+                ? 'bg-[var(--waltube-blue)] text-white blue-glow'
+                : 'glass-surface text-[var(--waltube-text-2)]'
             }`}
           >
             <Image className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -749,13 +753,13 @@ export function Feed() {
         </div>
       </div>
 
-      <div className="hidden md:block sticky top-0 z-40 glass-nav border-b border-[var(--cuerate-text-3)]">
+      <div className="hidden md:block sticky top-0 z-40 glass-nav border-b border-[var(--waltube-text-3)]">
         <div className="px-8 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-5 py-2 rounded-[var(--cuerate-r-pill)] glass-surface text-[var(--cuerate-text-1)] hover:text-white transition-all"
+                className="flex items-center gap-2 px-5 py-2 rounded-[var(--waltube-r-pill)] glass-surface text-[var(--waltube-text-1)] hover:text-white transition-all"
               >
                 <Filter className="w-4 h-4" />
                 <span className="font-accent text-sm font-medium">{selectedFilterLabel}</span>
@@ -763,10 +767,10 @@ export function Feed() {
               </button>
 
               {showFilters && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-[var(--cuerate-bg)] rounded-[var(--cuerate-r-lg)] border border-[var(--cuerate-text-3)] shadow-xl z-50">
+                <div className="absolute top-full left-0 mt-2 w-48 bg-[var(--waltube-bg)] rounded-[var(--waltube-r-lg)] border border-[var(--waltube-text-3)] shadow-xl z-50">
                   <button
                     onClick={() => setSelectedFilters(new Set())}
-                    className="w-full text-left px-4 py-2.5 font-accent text-xs text-[var(--cuerate-blue)] hover:bg-[var(--cuerate-surface)] border-b border-[var(--cuerate-text-3)]"
+                    className="w-full text-left px-4 py-2.5 font-accent text-xs text-[var(--waltube-blue)] hover:bg-[var(--waltube-surface)] border-b border-[var(--waltube-text-3)]"
                   >
                     Clear all
                   </button>
@@ -774,10 +778,10 @@ export function Feed() {
                     <button
                       key={filter}
                       onClick={() => toggleFilter(filter)}
-                      className={`w-full text-left px-4 py-2.5 font-accent text-sm transition-all last:rounded-b-[var(--cuerate-r-lg)] flex items-center justify-between ${
+                      className={`w-full text-left px-4 py-2.5 font-accent text-sm transition-all last:rounded-b-[var(--waltube-r-lg)] flex items-center justify-between ${
                         isFilterSelected(filter)
-                          ? 'bg-[var(--cuerate-indigo)] text-white'
-                          : 'text-[var(--cuerate-text-2)] hover:text-white hover:bg-[var(--cuerate-surface)]'
+                          ? 'bg-[var(--waltube-indigo)] text-white'
+                          : 'text-[var(--waltube-text-2)] hover:text-white hover:bg-[var(--waltube-surface)]'
                       }`}
                     >
                       <span>{filter}</span>
@@ -791,37 +795,37 @@ export function Feed() {
             <div className="flex gap-2">
               <button
                 onClick={() => setContentType('all')}
-                className={`px-5 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all ${
+                className={`px-5 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm font-medium transition-all ${
                   contentType === 'all'
-                    ? 'bg-[var(--cuerate-blue)] text-white blue-glow'
-                    : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                    ? 'bg-[var(--waltube-blue)] text-white blue-glow'
+                    : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                 }`}
               >
                 All
               </button>
               <button
                 onClick={() => setContentType('video')}
-                className={`group relative p-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all ${
+                className={`group relative p-2 rounded-[var(--waltube-r-pill)] font-accent text-sm font-medium transition-all ${
                   contentType === 'video'
-                    ? 'bg-[var(--cuerate-blue)] text-white blue-glow'
-                    : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                    ? 'bg-[var(--waltube-blue)] text-white blue-glow'
+                    : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                 }`}
               >
                 <Video className="w-4 h-4" />
-                <span className="absolute left-1/2 -translate-x-1/2 -bottom-8 px-2 py-1 rounded-md bg-[var(--cuerate-bg)] border border-[var(--cuerate-text-3)] text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <span className="absolute left-1/2 -translate-x-1/2 -bottom-8 px-2 py-1 rounded-md bg-[var(--waltube-bg)] border border-[var(--waltube-text-3)] text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                   Videos
                 </span>
               </button>
               <button
                 onClick={() => setContentType('image')}
-                className={`group relative p-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all ${
+                className={`group relative p-2 rounded-[var(--waltube-r-pill)] font-accent text-sm font-medium transition-all ${
                   contentType === 'image'
-                    ? 'bg-[var(--cuerate-blue)] text-white blue-glow'
-                    : 'glass-surface text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                    ? 'bg-[var(--waltube-blue)] text-white blue-glow'
+                    : 'glass-surface text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                 }`}
               >
                 <Image className="w-4 h-4" />
-                <span className="absolute left-1/2 -translate-x-1/2 -bottom-8 px-2 py-1 rounded-md bg-[var(--cuerate-bg)] border border-[var(--cuerate-text-3)] text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <span className="absolute left-1/2 -translate-x-1/2 -bottom-8 px-2 py-1 rounded-md bg-[var(--waltube-bg)] border border-[var(--waltube-text-3)] text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                   Images
                 </span>
               </button>
@@ -835,7 +839,7 @@ export function Feed() {
                 navigate(activeUser ? '/profile' : '/auth');
               }}
               disabled={authIsLoading}
-              className="max-w-[180px] truncate px-6 py-2 rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-indigo)] text-white font-accent text-sm font-medium indigo-glow hover:opacity-90 transition-all"
+              className="max-w-[180px] truncate px-6 py-2 rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)] text-white font-accent text-sm font-medium indigo-glow hover:opacity-90 transition-all"
               title={authIsLoading ? 'Loading account' : activeUser ? `@${activeUser.handle}` : 'Login'}
             >
               {authIsLoading ? 'Loading...' : displayNavHandle ? `@${displayNavHandle}` : 'Login'}
@@ -845,8 +849,11 @@ export function Feed() {
       </div>
 
       <div className="px-3 sm:px-4 md:px-8 py-3 sm:py-4 md:py-6">
-        <div className="prompt-grid">
-          {feedItems.map((item) =>
+        {isFeedLoading ? (
+          <SkeletonFeedGrid promptCount={4} workflowCount={2} />
+        ) : (
+          <div className="prompt-grid">
+            {feedItems.map((item) =>
             item.kind === 'prompt' ? (
               <PromptCard
                 key={item.id}
@@ -874,7 +881,8 @@ export function Feed() {
               />
             ),
           )}
-        </div>
+          </div>
+        )}
       </div>
 
       {forkModalPrompt && (
@@ -950,22 +958,36 @@ export function Feed() {
               walrusMetadataBlobId: metadataBlobId,
             });
 
-            if (
-              isAttributionConfigured
-              && forkModalPrompt.onchainAttributionId
-              && contentBlobId
-            ) {
+            if (isAttributionConfigured && contentBlobId) {
               try {
-                const attribution = await recordForkAttributionOnchain(
-                  {
-                    parentAttributionObjectId: forkModalPrompt.onchainAttributionId,
-                    promptId: createdFork.id,
-                    contentBlobId,
-                    metadataBlobId,
-                  },
-                  enokiFlow,
-                  suiClient,
-                );
+                let attribution: { txDigest: string; attributionObjectId: string | null };
+
+                if (forkModalPrompt.onchainAttributionId) {
+                  // Normal case: parent was attributed onchain, create fork record
+                  console.log('[attribution] recording fork with parent:', forkModalPrompt.onchainAttributionId);
+                  attribution = await recordForkAttributionOnchain(
+                    {
+                      parentAttributionObjectId: forkModalPrompt.onchainAttributionId,
+                      promptId: createdFork.id,
+                      contentBlobId,
+                      metadataBlobId,
+                    },
+                    enokiFlow,
+                    suiClient,
+                  );
+                } else {
+                  // Fallback: parent was never attributed, create a fresh prompt record
+                  console.warn('[attribution] parent lacks onchainAttributionId; creating standalone prompt attribution for fork');
+                  attribution = await recordPromptAttributionOnchain(
+                    {
+                      promptId: createdFork.id,
+                      contentBlobId,
+                      metadataBlobId,
+                    },
+                    enokiFlow,
+                    suiClient,
+                  );
+                }
 
                 await promptsApi.updateOnchainAttribution(createdFork.id, viewer.uid, {
                   onchainAttributionId: attribution.attributionObjectId,
@@ -981,9 +1003,12 @@ export function Feed() {
                   walrusContentBlobId: contentBlobId,
                   walrusMetadataBlobId: metadataBlobId,
                 };
+                console.log('[attribution] fork attributed onchain. tx:', attribution.txDigest, 'object:', attribution.attributionObjectId);
               } catch (error) {
                 console.warn('Could not record fork attribution onchain:', error);
               }
+            } else {
+              console.log('[attribution] skipped fork attribution — config:', isAttributionConfigured, 'blobId:', contentBlobId);
             }
 
             setLocalCreatedPrompts((prev) => [createdFork, ...prev.filter((entry) => entry.id !== createdFork.id)]);

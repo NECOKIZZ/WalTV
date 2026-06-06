@@ -12,11 +12,11 @@ function App() {
 
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="max-w-lg w-full glass-surface rounded-[var(--cuerate-r-xl)] border border-red-500/30 p-8 text-center">
-          <h1 className="font-primary font-bold text-2xl text-[var(--cuerate-text-1)] mb-3">
+        <div className="max-w-lg w-full glass-surface rounded-[var(--waltube-r-xl)] border border-red-500/30 p-8 text-center">
+          <h1 className="font-primary font-bold text-2xl text-[var(--waltube-text-1)] mb-3">
             Backend Configuration Required
           </h1>
-          <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+          <p className="font-accent text-sm text-[var(--waltube-text-2)]">
             Missing required configuration: {missing.join(' and ')}. Set the matching env vars before going live.
           </p>
         </div>

@@ -5,6 +5,7 @@ import { followsApi, promptsApi, usersApi, workflowsApi } from '../../lib/backen
 import { useAuth } from '../../lib/auth-context';
 import { useBackendQuery } from '../../lib/useBackendQuery';
 import { truncateText } from '../../lib/text';
+import { Avatar } from '../components/Avatar';
 
 function buildExternalUrl(rawUrl?: string) {
   const value = rawUrl?.trim();
@@ -69,7 +70,7 @@ export function UserProfile() {
   if (usersAreLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="font-accent text-[var(--cuerate-text-2)]">Loading profile...</p>
+        <p className="font-accent text-[var(--waltube-text-2)]">Loading profile...</p>
       </div>
     );
   }
@@ -77,7 +78,7 @@ export function UserProfile() {
   if (!profileUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="font-accent text-[var(--cuerate-text-2)]">User not found</p>
+        <p className="font-accent text-[var(--waltube-text-2)]">User not found</p>
       </div>
     );
   }
@@ -123,15 +124,15 @@ export function UserProfile() {
 
   return (
     <div className="min-h-screen pb-8">
-      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--cuerate-text-3)]">
+      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--waltube-text-3)]">
         <div className="flex items-center gap-3 px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 rounded-full hover:bg-[var(--cuerate-surface)] transition-colors"
+            className="p-2 rounded-full hover:bg-[var(--waltube-surface)] transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-[var(--cuerate-text-1)]" />
+            <ArrowLeft className="w-5 h-5 text-[var(--waltube-text-1)]" />
           </button>
-          <h1 className="max-w-[220px] truncate font-primary font-semibold text-lg text-[var(--cuerate-text-1)]" title={`@${profileUser.handle}`}>
+          <h1 className="max-w-[220px] truncate font-primary font-semibold text-lg text-[var(--waltube-text-1)]" title={`@${profileUser.handle}`}>
             @{displayHandle}
           </h1>
         </div>
@@ -140,19 +141,20 @@ export function UserProfile() {
       <div className="px-4 py-6 space-y-3">
         <div className="flex flex-col items-center text-center">
           <div className="relative mb-3">
-            <img
+            <Avatar
               src={profileUser.avatarUrl}
               alt={profileUser.handle}
-              className="w-32 h-32 rounded-full border-4 border-[var(--cuerate-indigo)] indigo-glow object-cover object-center"
+              size={128}
+              className="border-4 border-[var(--waltube-indigo)] indigo-glow"
             />
           </div>
-          <h2 className="max-w-[280px] truncate font-primary font-bold text-xl text-[var(--cuerate-text-1)] mb-0.5" title={profileUser.displayName}>
+          <h2 className="max-w-[280px] truncate font-primary font-bold text-xl text-[var(--waltube-text-1)] mb-0.5" title={profileUser.displayName}>
             {displayName}
           </h2>
-          <p className="max-w-[280px] truncate font-accent text-sm text-[var(--cuerate-text-2)] mb-2" title={`@${profileUser.handle}`}>
+          <p className="max-w-[280px] truncate font-accent text-sm text-[var(--waltube-text-2)] mb-2" title={`@${profileUser.handle}`}>
             @{displayHandle}
           </p>
-          <p className="font-accent text-sm text-[var(--cuerate-text-1)] mb-2 max-w-xs">
+          <p className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 max-w-xs">
             {profileUser.bio}
           </p>
 
@@ -163,10 +165,10 @@ export function UserProfile() {
                   href={buildExternalUrl(profileUser.links.x)}
                   target="_blank"
                   rel="noreferrer"
-                  className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                  className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                   aria-label="Open X profile"
                 >
-                  <Twitter className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                  <Twitter className="w-4 h-4 text-[var(--waltube-text-1)]" />
                 </a>
               )}
               {profileUser.links.instagram && (
@@ -174,10 +176,10 @@ export function UserProfile() {
                   href={buildExternalUrl(profileUser.links.instagram)}
                   target="_blank"
                   rel="noreferrer"
-                  className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                  className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                   aria-label="Open Instagram profile"
                 >
-                  <Instagram className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                  <Instagram className="w-4 h-4 text-[var(--waltube-text-1)]" />
                 </a>
               )}
               {profileUser.links.youtube && (
@@ -185,10 +187,10 @@ export function UserProfile() {
                   href={buildExternalUrl(profileUser.links.youtube)}
                   target="_blank"
                   rel="noreferrer"
-                  className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                  className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                   aria-label="Open YouTube profile"
                 >
-                  <Youtube className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                  <Youtube className="w-4 h-4 text-[var(--waltube-text-1)]" />
                 </a>
               )}
               {profileUser.links.website && (
@@ -196,10 +198,10 @@ export function UserProfile() {
                   href={buildExternalUrl(profileUser.links.website)}
                   target="_blank"
                   rel="noreferrer"
-                  className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                  className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                   aria-label="Open website"
                 >
-                  <Globe className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                  <Globe className="w-4 h-4 text-[var(--waltube-text-1)]" />
                 </a>
               )}
             </div>
@@ -211,10 +213,10 @@ export function UserProfile() {
             <button
               onClick={handleToggleFollow}
               disabled={authIsLoading}
-              className={`px-12 py-2.5 rounded-[var(--cuerate-r-pill)] font-accent font-medium transition-all ${
+              className={`px-12 py-2.5 rounded-[var(--waltube-r-pill)] font-accent font-medium transition-all ${
                 isFollowing
-                  ? 'glass-surface border border-[var(--cuerate-indigo)] text-[var(--cuerate-indigo)] hover:bg-[var(--cuerate-indigo)]/10'
-                  : 'bg-[var(--cuerate-indigo)] text-white indigo-glow hover:opacity-90'
+                  ? 'glass-surface border border-[var(--waltube-indigo)] text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/10'
+                  : 'bg-[var(--waltube-indigo)] text-white indigo-glow hover:opacity-90'
               }`}
             >
               {isFollowing ? 'Following' : 'Follow'}
@@ -222,22 +224,22 @@ export function UserProfile() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 p-4 rounded-[var(--cuerate-r-pill)] glass-surface">
+        <div className="grid grid-cols-2 gap-3 p-4 rounded-[var(--waltube-r-pill)] glass-surface">
           <div className="text-center">
-            <p className="font-primary font-bold text-lg text-[var(--cuerate-text-1)]">
+            <p className="font-primary font-bold text-lg text-[var(--waltube-text-1)]">
               {userPrompts.length}
             </p>
-            <p className="font-accent text-xs text-[var(--cuerate-text-2)]">Prompts</p>
+            <p className="font-accent text-xs text-[var(--waltube-text-2)]">Prompts</p>
           </div>
           <div className="text-center">
-            <p className="font-primary font-bold text-lg text-[var(--cuerate-text-1)]">
+            <p className="font-primary font-bold text-lg text-[var(--waltube-text-1)]">
               {followerCount.toLocaleString()}
             </p>
-            <p className="font-accent text-xs text-[var(--cuerate-text-2)]">Followers</p>
+            <p className="font-accent text-xs text-[var(--waltube-text-2)]">Followers</p>
           </div>
         </div>
 
-        <div className="border-b border-[var(--cuerate-text-3)]">
+        <div className="border-b border-[var(--waltube-text-3)]">
           <div className="flex w-full items-center justify-around">
             {(['prompts', 'forks', 'workflows'] as const).map((tab) => (
               <button
@@ -245,13 +247,13 @@ export function UserProfile() {
                 onClick={() => setActiveTab(tab)}
                 className={`pb-3 font-accent text-sm capitalize relative ${
                   activeTab === tab
-                    ? 'text-[var(--cuerate-indigo)]'
-                    : 'text-[var(--cuerate-text-2)]'
+                    ? 'text-[var(--waltube-indigo)]'
+                    : 'text-[var(--waltube-text-2)]'
                 }`}
               >
                 {tab}
                 {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--cuerate-indigo)] indigo-glow" />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--waltube-indigo)] indigo-glow" />
                 )}
               </button>
             ))}
@@ -264,7 +266,7 @@ export function UserProfile() {
               userWorkflows.map((workflow) => (
                 <div
                   key={workflow.id}
-                  className="relative rounded-[var(--cuerate-r-lg)] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                  className="relative rounded-[var(--waltube-r-lg)] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                   style={{ aspectRatio: getWorkflowAspectRatio(workflow) }}
                   role="button"
                   tabIndex={0}
@@ -291,7 +293,7 @@ export function UserProfile() {
               ))
             ) : (
               <div className="col-span-1 md:col-span-2 py-12 text-center">
-                <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+                <p className="font-accent text-sm text-[var(--waltube-text-2)]">
                   No workflows yet
                 </p>
               </div>
@@ -303,7 +305,7 @@ export function UserProfile() {
               tabContent.map((prompt) => (
                 <div
                   key={prompt.id}
-                  className="relative rounded-[var(--cuerate-r-md)] overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                  className="relative rounded-[var(--waltube-r-md)] overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                   style={{ aspectRatio: getPromptAspectRatio(prompt) }}
                   role="button"
                   tabIndex={0}
@@ -326,7 +328,7 @@ export function UserProfile() {
               ))
             ) : (
               <div className="col-span-2 md:col-span-3 lg:col-span-4 py-12 text-center">
-                <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+                <p className="font-accent text-sm text-[var(--waltube-text-2)]">
                   No {activeTab} yet
                 </p>
               </div>

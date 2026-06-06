@@ -1,4 +1,4 @@
-// Mock data for Cuerate app development
+// Mock data for WalTube app development
 // This simulates Firebase data structures
 import {
   availableModels,
@@ -264,7 +264,7 @@ export const mockWorkflows: Workflow[] = [
     tool: 'Runway',
     description: 'A four-step workflow for building a polished product campaign from concept frames to final reveal.',
     coverVideoUrl: 'https://example.com/workflow-cover-1.mp4',
-    coverThumbnailUrl: 'https://picsum.photos/seed/cuerate-portrait-cover/720/1280',
+    coverThumbnailUrl: 'https://picsum.photos/seed/waltube-portrait-cover/720/1280',
     tags: ['beauty', 'cinematic', 'launch'],
     stepCount: 4,
     likes: 284,
@@ -281,7 +281,7 @@ export const mockWorkflows: Workflow[] = [
         promptText: 'Luxury skincare bottle rotating on wet black acrylic, warm spotlight bloom, droplets glistening, ultra-clean product cinematography, slow motion reveal.',
         note: 'Use this first to establish the premium visual language for the full sequence.',
         resultMediaUrl: 'https://example.com/workflow-step1.mp4',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-portrait-step1/720/1280',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-portrait-step1/720/1280',
         resultContentType: 'video',
       },
       {
@@ -292,9 +292,9 @@ export const mockWorkflows: Workflow[] = [
         generationType: 'image_to_video',
         promptText: 'Animate the serum texture with a slow orbit and glassy highlights while keeping the color palette champagne and ivory.',
         note: 'Feed a clean ingredient still as the source so the motion stays elegant.',
-        inputImageUrl: 'https://picsum.photos/seed/cuerate-portrait-input2/720/1280',
+        inputImageUrl: 'https://picsum.photos/seed/waltube-portrait-input2/720/1280',
         resultMediaUrl: 'https://example.com/workflow-step2.mp4',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-portrait-step2/720/1280',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-portrait-step2/720/1280',
         resultContentType: 'video',
       },
       {
@@ -306,10 +306,10 @@ export const mockWorkflows: Workflow[] = [
         promptText:
           'Morph from capped bottle frame into uncapped bottle frame with smooth liquid motion continuity, keeping the same lens feel and warm studio lighting.',
         note: 'This works best when both frames share the same lighting setup and lens feel.',
-        startFrameUrl: 'https://picsum.photos/seed/cuerate-portrait-start3/720/1280',
-        endFrameUrl: 'https://picsum.photos/seed/cuerate-portrait-end3/720/1280',
+        startFrameUrl: 'https://picsum.photos/seed/waltube-portrait-start3/720/1280',
+        endFrameUrl: 'https://picsum.photos/seed/waltube-portrait-end3/720/1280',
         resultMediaUrl: 'https://example.com/workflow-step3.mp4',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-portrait-step3/720/1280',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-portrait-step3/720/1280',
         resultContentType: 'video',
       },
       {
@@ -320,8 +320,8 @@ export const mockWorkflows: Workflow[] = [
         generationType: 'prompt_to_image',
         promptText: 'Editorial beauty still of the bottle standing in reflective water, warm sunrise gradient, minimal luxury composition, premium skincare ad.',
         note: 'Use the final still as the social thumbnail and landing image.',
-        resultMediaUrl: 'https://picsum.photos/seed/cuerate-portrait-step4/720/1280',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-portrait-step4/720/1280',
+        resultMediaUrl: 'https://picsum.photos/seed/waltube-portrait-step4/720/1280',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-portrait-step4/720/1280',
         resultContentType: 'image',
       },
     ],
@@ -335,7 +335,7 @@ export const mockWorkflows: Workflow[] = [
     tool: 'Sora',
     description: 'A four-step landscape workflow to compare wide-frame thread behavior and spacing.',
     coverVideoUrl: 'https://example.com/workflow-cover-2.mp4',
-    coverThumbnailUrl: 'https://picsum.photos/seed/cuerate-landscape-cover/1280/720',
+    coverThumbnailUrl: 'https://picsum.photos/seed/waltube-landscape-cover/1280/720',
     tags: ['streetwear', 'urban', 'campaign'],
     stepCount: 4,
     likes: 316,
@@ -353,7 +353,7 @@ export const mockWorkflows: Workflow[] = [
           'Wide city rooftop reveal with subject centered, wind-reactive jacket movement, dramatic skyline in the distance, golden-hour contrast.',
         note: 'Use a cinematic wide setup to establish brand tone.',
         resultMediaUrl: 'https://example.com/workflow2-step1.mp4',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-landscape-step1/1280/720',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-landscape-step1/1280/720',
         resultContentType: 'video',
       },
       {
@@ -365,9 +365,9 @@ export const mockWorkflows: Workflow[] = [
         promptText:
           'Animate fabric texture and logo patch with subtle camera parallax, preserving original color balance and edge details.',
         note: 'Reference still drives fine-grain material realism.',
-        inputImageUrl: 'https://picsum.photos/seed/cuerate-landscape-input2/1280/720',
+        inputImageUrl: 'https://picsum.photos/seed/waltube-landscape-input2/1280/720',
         resultMediaUrl: 'https://example.com/workflow2-step2.mp4',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-landscape-step2/1280/720',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-landscape-step2/1280/720',
         resultContentType: 'video',
       },
       {
@@ -379,10 +379,10 @@ export const mockWorkflows: Workflow[] = [
         promptText:
           'Transition from relaxed standing pose to walking pose with smooth body continuity and consistent rooftop lighting.',
         note: 'Keep both source frames aligned for cleaner interpolation.',
-        startFrameUrl: 'https://picsum.photos/seed/cuerate-landscape-start3/1280/720',
-        endFrameUrl: 'https://picsum.photos/seed/cuerate-landscape-end3/1280/720',
+        startFrameUrl: 'https://picsum.photos/seed/waltube-landscape-start3/1280/720',
+        endFrameUrl: 'https://picsum.photos/seed/waltube-landscape-end3/1280/720',
         resultMediaUrl: 'https://example.com/workflow2-step3.mp4',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-landscape-step3/1280/720',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-landscape-step3/1280/720',
         resultContentType: 'video',
       },
       {
@@ -394,8 +394,8 @@ export const mockWorkflows: Workflow[] = [
         promptText:
           'Landscape editorial still with bold streetwear silhouette, clean sky gradient, and minimal text-safe composition.',
         note: 'Use as cover and campaign endpoint visual.',
-        resultMediaUrl: 'https://picsum.photos/seed/cuerate-landscape-step4/1280/720',
-        resultThumbnailUrl: 'https://picsum.photos/seed/cuerate-landscape-step4/1280/720',
+        resultMediaUrl: 'https://picsum.photos/seed/waltube-landscape-step4/1280/720',
+        resultThumbnailUrl: 'https://picsum.photos/seed/waltube-landscape-step4/1280/720',
         resultContentType: 'image',
       },
     ],

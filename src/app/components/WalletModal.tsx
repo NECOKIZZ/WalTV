@@ -70,59 +70,59 @@ export function WalletModal({ open, onClose }: WalletModalProps) {
       />
 
       {/* Modal card */}
-      <div className="relative w-full max-w-sm glass-surface rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] p-6 shadow-2xl">
+      <div className="relative w-full max-w-sm glass-surface rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] p-6 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[var(--cuerate-r-md)] bg-[var(--cuerate-indigo)]/10 flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-[var(--cuerate-indigo)]" />
+            <div className="w-10 h-10 rounded-[var(--waltube-r-md)] bg-[var(--waltube-indigo)]/10 flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-[var(--waltube-indigo)]" />
             </div>
             <div>
               <h2 className="font-primary font-semibold text-lg text-white">My Wallet</h2>
-              <p className="font-accent text-xs text-[var(--cuerate-text-2)]">Sui Testnet</p>
+              <p className="font-accent text-xs text-[var(--waltube-text-2)]">Sui Testnet</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-[var(--cuerate-r-sm)] text-[var(--cuerate-text-2)] hover:text-white hover:bg-[var(--cuerate-surface)] transition-all"
+            className="p-2 rounded-[var(--waltube-r-sm)] text-[var(--waltube-text-2)] hover:text-white hover:bg-[var(--waltube-surface)] transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Balance Card */}
-        <div className="rounded-[var(--cuerate-r-lg)] bg-[var(--cuerate-surface)] border border-[var(--cuerate-text-3)]/50 p-5 mb-5">
-          <p className="font-accent text-xs text-[var(--cuerate-text-2)] mb-1">Available Balance</p>
+        <div className="rounded-[var(--waltube-r-lg)] bg-[var(--waltube-surface)] border border-[var(--waltube-text-3)]/50 p-5 mb-5">
+          <p className="font-accent text-xs text-[var(--waltube-text-2)] mb-1">Available Balance</p>
           <div className="flex items-baseline gap-1">
             {balanceLoading ? (
-              <span className="font-primary text-2xl text-[var(--cuerate-text-2)]">Loading...</span>
+              <span className="font-primary text-2xl text-[var(--waltube-text-2)]">Loading...</span>
             ) : balance !== null ? (
               <>
                 <span className="font-primary text-3xl font-bold text-white">{balance}</span>
-                <span className="font-accent text-sm text-[var(--cuerate-text-2)]">SUI</span>
+                <span className="font-accent text-sm text-[var(--waltube-text-2)]">SUI</span>
               </>
             ) : (
-              <span className="font-primary text-lg text-[var(--cuerate-text-2)]">Unavailable</span>
+              <span className="font-primary text-lg text-[var(--waltube-text-2)]">Unavailable</span>
             )}
           </div>
         </div>
 
         {/* Deposit Section */}
-        <div className="rounded-[var(--cuerate-r-lg)] bg-[var(--cuerate-surface)] border border-[var(--cuerate-text-3)]/50 p-5 mb-5">
+        <div className="rounded-[var(--waltube-r-lg)] bg-[var(--waltube-surface)] border border-[var(--waltube-text-3)]/50 p-5 mb-5">
           <div className="flex items-center gap-2 mb-3">
-            <ArrowDownToLine className="w-4 h-4 text-[var(--cuerate-blue)]" />
+            <ArrowDownToLine className="w-4 h-4 text-[var(--waltube-blue)]" />
             <p className="font-accent text-sm font-medium text-white">Deposit</p>
           </div>
-          <p className="font-accent text-xs text-[var(--cuerate-text-2)] mb-3">
+          <p className="font-accent text-xs text-[var(--waltube-text-2)] mb-3">
             Send SUI to this address to fund your wallet.
           </p>
-          <div className="flex items-center gap-2 rounded-[var(--cuerate-r-md)] bg-black/40 border border-[var(--cuerate-text-3)]/30 px-3 py-2.5">
-            <span className="font-mono text-xs text-[var(--cuerate-text-2)] flex-1 truncate">
+          <div className="flex items-center gap-2 rounded-[var(--waltube-r-md)] bg-black/40 border border-[var(--waltube-text-3)]/30 px-3 py-2.5">
+            <span className="font-mono text-xs text-[var(--waltube-text-2)] flex-1 truncate">
               {shortenedAddress}
             </span>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--cuerate-r-sm)] bg-[var(--cuerate-indigo)]/10 text-[var(--cuerate-indigo)] hover:bg-[var(--cuerate-indigo)]/20 transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--waltube-r-sm)] bg-[var(--waltube-indigo)]/10 text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/20 transition-all"
             >
               {copied ? (
                 <>
@@ -140,17 +140,17 @@ export function WalletModal({ open, onClose }: WalletModalProps) {
         </div>
 
         {/* Withdraw Section */}
-        <div className="rounded-[var(--cuerate-r-lg)] bg-[var(--cuerate-surface)] border border-[var(--cuerate-text-3)]/50 p-5">
+        <div className="rounded-[var(--waltube-r-lg)] bg-[var(--waltube-surface)] border border-[var(--waltube-text-3)]/50 p-5">
           <div className="flex items-center gap-2 mb-3">
-            <ArrowUpFromLine className="w-4 h-4 text-[var(--cuerate-text-2)]" />
-            <p className="font-accent text-sm font-medium text-[var(--cuerate-text-2)]">Withdraw</p>
+            <ArrowUpFromLine className="w-4 h-4 text-[var(--waltube-text-2)]" />
+            <p className="font-accent text-sm font-medium text-[var(--waltube-text-2)]">Withdraw</p>
           </div>
-          <p className="font-accent text-xs text-[var(--cuerate-text-2)] mb-3">
+          <p className="font-accent text-xs text-[var(--waltube-text-2)] mb-3">
             Send SUI to another wallet address.
           </p>
           <button
             onClick={handleWithdraw}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--cuerate-r-md)] bg-[var(--cuerate-surface)] border border-[var(--cuerate-text-3)] text-[var(--cuerate-text-2)] hover:text-white hover:border-[var(--cuerate-text-2)] transition-all font-accent text-sm"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--waltube-r-md)] bg-[var(--waltube-surface)] border border-[var(--waltube-text-3)] text-[var(--waltube-text-2)] hover:text-white hover:border-[var(--waltube-text-2)] transition-all font-accent text-sm"
           >
             <ArrowUpFromLine className="w-4 h-4" />
             Withdraw SUI

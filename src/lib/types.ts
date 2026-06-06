@@ -7,7 +7,7 @@ export interface UserLinks {
 
 export interface User {
   // The user's Sui address, derived via zkLogin from their Google OAuth
-  // identity. This IS the user's primary identity in Cuerate \u2014 there is no
+  // identity. This IS the user's primary identity in WalTube \u2014 there is no
   // separate Firebase uid layer. Sui addresses are lowercase, 66 chars
   // (0x + 64 hex). The Firestore doc id matches this exactly.
   uid: string;

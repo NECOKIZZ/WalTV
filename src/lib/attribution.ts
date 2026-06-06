@@ -31,7 +31,7 @@ function isCreatedAttributionObject(change: unknown, packageId: string): change 
     && entry.objectType.includes(`${packageId}::${ATTRIBUTION_RECORD_TYPE}`);
 }
 
-export const attributionPackageId = normalizePackageId(readEnv('VITE_CUERATE_ATTRIBUTION_PACKAGE_ID'));
+export const attributionPackageId = normalizePackageId(readEnv('VITE_WalTube_ATTRIBUTION_PACKAGE_ID'));
 export const isAttributionConfigured = attributionPackageId.length > 0;
 
 export interface OnchainAttributionResult {
@@ -63,7 +63,7 @@ export function buildRecordPromptAttributionTx(input: {
   metadataBlobId?: string;
 }) {
   if (!isAttributionConfigured) {
-    throw new Error('Move attribution package is not configured. Set VITE_CUERATE_ATTRIBUTION_PACKAGE_ID.');
+    throw new Error('Move attribution package is not configured. Set VITE_WalTube_ATTRIBUTION_PACKAGE_ID.');
   }
 
   const tx = new Transaction();
@@ -86,7 +86,7 @@ export function buildRecordForkAttributionTx(input: {
   metadataBlobId?: string;
 }) {
   if (!isAttributionConfigured) {
-    throw new Error('Move attribution package is not configured. Set VITE_CUERATE_ATTRIBUTION_PACKAGE_ID.');
+    throw new Error('Move attribution package is not configured. Set VITE_WalTube_ATTRIBUTION_PACKAGE_ID.');
   }
 
   const tx = new Transaction();

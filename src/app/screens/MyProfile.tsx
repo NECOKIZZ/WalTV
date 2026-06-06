@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth-context';
 import { shortenSuiAddress } from '../../lib/sui';
 import { truncateText } from '../../lib/text';
 import { Prompt, Workflow } from '../../lib/types';
+import { Avatar } from '../components/Avatar';
 
 function buildExternalUrl(rawUrl?: string) {
   const value = rawUrl?.trim();
@@ -89,8 +90,8 @@ export function MyProfile() {
   if (authIsLoading && !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="max-w-md w-full glass-surface rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] p-8 text-center">
-          <span className="inline-flex items-center gap-2 font-accent text-sm text-[var(--cuerate-text-2)]">
+        <div className="max-w-md w-full glass-surface rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] p-8 text-center">
+          <span className="inline-flex items-center gap-2 font-accent text-sm text-[var(--waltube-text-2)]">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading your profile...
           </span>
@@ -102,14 +103,14 @@ export function MyProfile() {
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="max-w-md w-full glass-surface rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] p-8 text-center">
-          <h1 className="font-primary font-bold text-2xl text-[var(--cuerate-text-1)] mb-3">You are not logged in</h1>
-          <p className="font-accent text-sm text-[var(--cuerate-text-2)] mb-6">
+        <div className="max-w-md w-full glass-surface rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] p-8 text-center">
+          <h1 className="font-primary font-bold text-2xl text-[var(--waltube-text-1)] mb-3">You are not logged in</h1>
+          <p className="font-accent text-sm text-[var(--waltube-text-2)] mb-6">
             Sign in to view your profile, saved prompts, and publishing stats.
           </p>
           <Link
             to="/auth"
-            className="inline-flex items-center justify-center w-full rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow"
+            className="inline-flex items-center justify-center w-full rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow"
           >
             Log In / Sign Up
           </Link>
@@ -299,9 +300,9 @@ export function MyProfile() {
 
   return (
     <div className="min-h-screen pb-8">
-      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--cuerate-text-3)]">
+      <div className="sticky top-0 z-40 glass-nav border-b border-[var(--waltube-text-3)]">
         <div className="px-4 md:px-8 py-4 md:py-6">
-          <h1 className="font-primary font-semibold text-lg md:text-2xl text-[var(--cuerate-text-1)]">
+          <h1 className="font-primary font-semibold text-lg md:text-2xl text-[var(--waltube-text-1)]">
             Profile
           </h1>
         </div>
@@ -311,13 +312,22 @@ export function MyProfile() {
         <div className="space-y-6">
           <div className="flex flex-col items-center text-center">
             <div className="relative mb-4">
-              <img
-                src={avatarPreviewUrl ?? profile.avatarUrl}
-                alt={profile.handle}
-                className="w-32 h-32 rounded-full border-4 border-[var(--cuerate-indigo)] indigo-glow object-cover object-center"
-              />
+              {avatarPreviewUrl ? (
+                <img
+                  src={avatarPreviewUrl}
+                  alt={profile.handle}
+                  className="w-32 h-32 rounded-full border-4 border-[var(--waltube-indigo)] indigo-glow object-cover object-center"
+                />
+              ) : (
+                <Avatar
+                  src={profile.avatarUrl}
+                  alt={profile.handle}
+                  size={128}
+                  className="border-4 border-[var(--waltube-indigo)] indigo-glow"
+                />
+              )}
             </div>
-            <h2 className="max-w-[280px] truncate font-primary font-bold text-xl text-[var(--cuerate-text-1)] mb-1" title={`@${profile.handle}`}>
+            <h2 className="max-w-[280px] truncate font-primary font-bold text-xl text-[var(--waltube-text-1)] mb-1" title={`@${profile.handle}`}>
               @{displayHandle}
             </h2>
             {profile.suiAddress && (
@@ -325,16 +335,16 @@ export function MyProfile() {
                 onClick={() => {
                   void navigator.clipboard?.writeText(profile.suiAddress ?? '');
                 }}
-                className="mb-3 inline-flex items-center gap-2 rounded-[var(--cuerate-r-pill)] glass-surface border border-[var(--cuerate-indigo)]/40 px-3 py-1.5 font-accent text-xs text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                className="mb-3 inline-flex items-center gap-2 rounded-[var(--waltube-r-pill)] glass-surface border border-[var(--waltube-indigo)]/40 px-3 py-1.5 font-accent text-xs text-[var(--waltube-text-1)] hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                 title={`Sui address: ${profile.suiAddress}`}
                 aria-label="Copy Sui address"
               >
-                <Wallet className="w-3.5 h-3.5 text-[var(--cuerate-indigo)]" />
+                <Wallet className="w-3.5 h-3.5 text-[var(--waltube-indigo)]" />
                 <span className="font-mono">{shortenSuiAddress(profile.suiAddress)}</span>
-                <Copy className="w-3 h-3 text-[var(--cuerate-text-2)]" />
+                <Copy className="w-3 h-3 text-[var(--waltube-text-2)]" />
               </button>
             )}
-            <p className="font-accent text-sm text-[var(--cuerate-text-1)] mb-3 max-w-xs">
+            <p className="font-accent text-sm text-[var(--waltube-text-1)] mb-3 max-w-xs">
               {profile.bio || 'No profile bio yet.'}
             </p>
 
@@ -345,10 +355,10 @@ export function MyProfile() {
                     href={buildExternalUrl(profile.links.x)}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                    className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                     aria-label="Open X profile"
                   >
-                    <Twitter className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                    <Twitter className="w-4 h-4 text-[var(--waltube-text-1)]" />
                   </a>
                 )}
                 {profile.links.instagram && (
@@ -356,10 +366,10 @@ export function MyProfile() {
                     href={buildExternalUrl(profile.links.instagram)}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                    className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                     aria-label="Open Instagram profile"
                   >
-                    <Instagram className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                    <Instagram className="w-4 h-4 text-[var(--waltube-text-1)]" />
                   </a>
                 )}
                 {profile.links.youtube && (
@@ -367,10 +377,10 @@ export function MyProfile() {
                     href={buildExternalUrl(profile.links.youtube)}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                    className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                     aria-label="Open YouTube profile"
                   >
-                    <Youtube className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                    <Youtube className="w-4 h-4 text-[var(--waltube-text-1)]" />
                   </a>
                 )}
                 {profile.links.website && (
@@ -378,10 +388,10 @@ export function MyProfile() {
                     href={buildExternalUrl(profile.links.website)}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2 rounded-[var(--cuerate-r-pill)] glass-surface hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+                    className="p-2 rounded-[var(--waltube-r-pill)] glass-surface hover:bg-[var(--waltube-indigo)]/10 transition-colors"
                     aria-label="Open website"
                   >
-                    <Globe className="w-4 h-4 text-[var(--cuerate-text-1)]" />
+                    <Globe className="w-4 h-4 text-[var(--waltube-text-1)]" />
                   </a>
                 )}
               </div>
@@ -389,45 +399,45 @@ export function MyProfile() {
 
           </div>
 
-          <div className="grid grid-cols-3 gap-3 p-4 rounded-[var(--cuerate-r-pill)] glass-surface">
+          <div className="grid grid-cols-3 gap-3 p-4 rounded-[var(--waltube-r-pill)] glass-surface">
             <div className="text-center">
-              <p className="font-primary font-bold text-lg text-[var(--cuerate-text-1)]">
+              <p className="font-primary font-bold text-lg text-[var(--waltube-text-1)]">
                 {userPrompts.length}
               </p>
-              <p className="font-accent text-xs text-[var(--cuerate-text-2)]">Prompts</p>
+              <p className="font-accent text-xs text-[var(--waltube-text-2)]">Prompts</p>
             </div>
             <div className="text-center">
-              <p className="font-primary font-bold text-lg text-[var(--cuerate-text-1)]">
+              <p className="font-primary font-bold text-lg text-[var(--waltube-text-1)]">
                 {followerCount.toLocaleString()}
               </p>
-              <p className="font-accent text-xs text-[var(--cuerate-text-2)]">Followers</p>
+              <p className="font-accent text-xs text-[var(--waltube-text-2)]">Followers</p>
             </div>
             <div className="text-center">
-              <p className="font-primary font-bold text-lg text-[var(--cuerate-text-1)]">
+              <p className="font-primary font-bold text-lg text-[var(--waltube-text-1)]">
                 {followingCount}
               </p>
-              <p className="font-accent text-xs text-[var(--cuerate-text-2)]">Following</p>
+              <p className="font-accent text-xs text-[var(--waltube-text-2)]">Following</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={openEditModal}
-              className="w-full py-3 rounded-[var(--cuerate-r-pill)] glass-surface border border-[var(--cuerate-indigo)] font-accent font-medium text-[var(--cuerate-indigo)] hover:bg-[var(--cuerate-indigo)]/10 hover:shadow-[0_0_22px_rgba(85,0,204,0.28)] hover:-translate-y-0.5 transition-all"
+              className="w-full py-3 rounded-[var(--waltube-r-pill)] glass-surface border border-[var(--waltube-indigo)] font-accent font-medium text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/10 hover:shadow-[0_0_22px_rgba(85,0,204,0.28)] hover:-translate-y-0.5 transition-all"
             >
               Edit Profile
             </button>
 
             <button
               onClick={() => void signOut()}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-indigo)]/10 border border-[var(--cuerate-indigo)]/40 font-accent font-medium text-[var(--cuerate-indigo)] hover:bg-[var(--cuerate-indigo)]/20 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)]/10 border border-[var(--waltube-indigo)]/40 font-accent font-medium text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/20 transition-colors"
             >
               <LogOut className="h-4 w-4" />
               Log Out
             </button>
           </div>
 
-          <div className="border-b border-[var(--cuerate-text-3)]">
+          <div className="border-b border-[var(--waltube-text-3)]">
             <div className="flex w-full items-center justify-around">
               {(['prompts', 'forks', 'saves', 'workflows'] as const).map((tab) => (
                 <button
@@ -435,13 +445,13 @@ export function MyProfile() {
                   onClick={() => setActiveTab(tab)}
                   className={`pb-3 font-accent text-sm capitalize relative ${
                     activeTab === tab
-                      ? 'text-[var(--cuerate-indigo)]'
-                      : 'text-[var(--cuerate-text-2)]'
+                      ? 'text-[var(--waltube-indigo)]'
+                      : 'text-[var(--waltube-text-2)]'
                   }`}
                 >
                   {tab}
                   {activeTab === tab && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--cuerate-indigo)] indigo-glow" />
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--waltube-indigo)] indigo-glow" />
                   )}
                 </button>
               ))}
@@ -454,7 +464,7 @@ export function MyProfile() {
                 userWorkflows.map((workflow: Workflow) => (
                   <div
                     key={workflow.id}
-                    className="relative rounded-[var(--cuerate-r-lg)] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                    className="relative rounded-[var(--waltube-r-lg)] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                     style={{ aspectRatio: getWorkflowAspectRatio(workflow) }}
                     role="button"
                     tabIndex={0}
@@ -492,7 +502,7 @@ export function MyProfile() {
                 ))
               ) : (
                 <div className="col-span-1 md:col-span-2 py-12 text-center">
-                  <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+                  <p className="font-accent text-sm text-[var(--waltube-text-2)]">
                     No workflows yet
                   </p>
                 </div>
@@ -504,7 +514,7 @@ export function MyProfile() {
                 promptTabContent.map((prompt) => (
                   <div
                     key={prompt.id}
-                    className="relative rounded-[var(--cuerate-r-md)] overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                    className="relative rounded-[var(--waltube-r-md)] overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                     style={{ aspectRatio: getPromptAspectRatio(prompt) }}
                     role="button"
                     tabIndex={0}
@@ -542,18 +552,18 @@ export function MyProfile() {
                           event.stopPropagation();
                           handleToggleSavedPrompt(prompt.id);
                         }}
-                        className="absolute top-1 left-1 p-2 rounded-full bg-black/60 hover:bg-[var(--cuerate-indigo)]/70 transition-colors"
+                        className="absolute top-1 left-1 p-2 rounded-full bg-black/60 hover:bg-[var(--waltube-indigo)]/70 transition-colors"
                         aria-label="Unsave prompt"
                         title="Remove from saved"
                       >
-                        <Bookmark className="h-4 w-4 text-[var(--cuerate-indigo)] fill-[var(--cuerate-indigo)]" />
+                        <Bookmark className="h-4 w-4 text-[var(--waltube-indigo)] fill-[var(--waltube-indigo)]" />
                       </button>
                     )}
                   </div>
                 ))
               ) : (
                 <div className="col-span-2 md:col-span-3 lg:col-span-4 py-12 text-center">
-                  <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+                  <p className="font-accent text-sm text-[var(--waltube-text-2)]">
                     No {activeTab} yet
                   </p>
                 </div>
@@ -565,15 +575,15 @@ export function MyProfile() {
 
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-bg)] p-5">
+          <div className="w-full max-w-lg rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] bg-[var(--waltube-bg)] p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-primary text-xl font-semibold text-[var(--cuerate-text-1)]">Edit profile</h3>
+              <h3 className="font-primary text-xl font-semibold text-[var(--waltube-text-1)]">Edit profile</h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="rounded-full p-2 hover:bg-[var(--cuerate-surface)]"
+                className="rounded-full p-2 hover:bg-[var(--waltube-surface)]"
                 aria-label="Close edit profile dialog"
               >
-                <X className="h-4 w-4 text-[var(--cuerate-text-2)]" />
+                <X className="h-4 w-4 text-[var(--waltube-text-2)]" />
               </button>
             </div>
 
@@ -582,9 +592,9 @@ export function MyProfile() {
                 <img
                   src={avatarPreviewUrl ?? profile.avatarUrl}
                   alt={profile.handle}
-                  className="h-20 w-20 rounded-full border-2 border-[var(--cuerate-indigo)] object-cover"
+                  className="h-20 w-20 rounded-full border-2 border-[var(--waltube-indigo)] object-cover"
                 />
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--cuerate-r-pill)] border border-[var(--cuerate-indigo)]/40 bg-[var(--cuerate-indigo)]/10 px-4 py-2 font-accent text-sm text-[var(--cuerate-indigo)] hover:bg-[var(--cuerate-indigo)]/20">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--waltube-r-pill)] border border-[var(--waltube-indigo)]/40 bg-[var(--waltube-indigo)]/10 px-4 py-2 font-accent text-sm text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/20">
                   <Camera className="h-4 w-4" />
                   Upload photo
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
@@ -592,23 +602,23 @@ export function MyProfile() {
               </div>
 
               <div>
-                <label className="mb-2 block font-accent text-sm text-[var(--cuerate-text-2)]">Username</label>
+                <label className="mb-2 block font-accent text-sm text-[var(--waltube-text-2)]">Username</label>
                 <input
                   value={draftHandle}
                   onChange={(event) => setDraftHandle(event.target.value)}
                   placeholder="username"
-                  className="w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none focus:border-[var(--cuerate-indigo)]"
+                  className="w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none focus:border-[var(--waltube-indigo)]"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block font-accent text-sm text-[var(--cuerate-text-2)]">Bio</label>
+                <label className="mb-2 block font-accent text-sm text-[var(--waltube-text-2)]">Bio</label>
                 <textarea
                   value={draftBio}
                   onChange={(event) => setDraftBio(event.target.value)}
                   rows={3}
                   maxLength={160}
-                  className="w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none focus:border-[var(--cuerate-indigo)]"
+                  className="w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none focus:border-[var(--waltube-indigo)]"
                 />
               </div>
 
@@ -617,30 +627,30 @@ export function MyProfile() {
                   value={draftX}
                   onChange={(event) => setDraftX(event.target.value)}
                   placeholder="X link"
-                  className="w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none focus:border-[var(--cuerate-indigo)]"
+                  className="w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none focus:border-[var(--waltube-indigo)]"
                 />
                 <input
                   value={draftInstagram}
                   onChange={(event) => setDraftInstagram(event.target.value)}
                   placeholder="Instagram link"
-                  className="w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none focus:border-[var(--cuerate-indigo)]"
+                  className="w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none focus:border-[var(--waltube-indigo)]"
                 />
                 <input
                   value={draftYoutube}
                   onChange={(event) => setDraftYoutube(event.target.value)}
                   placeholder="YouTube link"
-                  className="w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none focus:border-[var(--cuerate-indigo)]"
+                  className="w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none focus:border-[var(--waltube-indigo)]"
                 />
                 <input
                   value={draftWebsite}
                   onChange={(event) => setDraftWebsite(event.target.value)}
                   placeholder="Website link"
-                  className="w-full rounded-[var(--cuerate-r-md)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-1)] outline-none focus:border-[var(--cuerate-indigo)]"
+                  className="w-full rounded-[var(--waltube-r-md)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-1)] outline-none focus:border-[var(--waltube-indigo)]"
                 />
               </div>
 
               {profileError && (
-                <div className="rounded-[var(--cuerate-r-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 font-accent text-sm text-red-200">
+                <div className="rounded-[var(--waltube-r-md)] border border-red-500/30 bg-red-500/10 px-4 py-3 font-accent text-sm text-red-200">
                   {profileError}
                 </div>
               )}
@@ -648,14 +658,14 @@ export function MyProfile() {
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={() => setIsEditModalOpen(false)}
-                  className="flex-1 rounded-[var(--cuerate-r-pill)] border border-[var(--cuerate-text-3)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-2)] hover:bg-[var(--cuerate-surface)]"
+                  className="flex-1 rounded-[var(--waltube-r-pill)] border border-[var(--waltube-text-3)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-2)] hover:bg-[var(--waltube-surface)]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => void handleSaveProfile()}
                   disabled={isSavingProfile}
-                  className="flex-1 rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow hover:opacity-90 disabled:opacity-60"
+                  className="flex-1 rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow hover:opacity-90 disabled:opacity-60"
                 >
                   {isSavingProfile ? (
                     <span className="inline-flex items-center gap-2">
@@ -674,23 +684,23 @@ export function MyProfile() {
 
       {workflowPendingDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[var(--cuerate-r-xl)] border border-red-500/30 bg-[var(--cuerate-bg)] p-5">
+          <div className="w-full max-w-md rounded-[var(--waltube-r-xl)] border border-red-500/30 bg-[var(--waltube-bg)] p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-primary text-xl font-semibold text-[var(--cuerate-text-1)]">Delete workflow?</h3>
+              <h3 className="font-primary text-xl font-semibold text-[var(--waltube-text-1)]">Delete workflow?</h3>
               <button
                 onClick={() => setWorkflowPendingDelete(null)}
                 disabled={deletingWorkflowId === workflowPendingDelete.id}
-                className="rounded-full p-2 hover:bg-[var(--cuerate-surface)] disabled:opacity-50"
+                className="rounded-full p-2 hover:bg-[var(--waltube-surface)] disabled:opacity-50"
                 aria-label="Close delete workflow confirmation dialog"
               >
-                <X className="h-4 w-4 text-[var(--cuerate-text-2)]" />
+                <X className="h-4 w-4 text-[var(--waltube-text-2)]" />
               </button>
             </div>
 
-            <p className="mb-1 font-accent text-sm text-[var(--cuerate-text-1)]">
+            <p className="mb-1 font-accent text-sm text-[var(--waltube-text-1)]">
               This action cannot be undone.
             </p>
-            <p className="mb-5 font-accent text-xs text-[var(--cuerate-text-2)]">
+            <p className="mb-5 font-accent text-xs text-[var(--waltube-text-2)]">
               The workflow, its steps, and uploaded media files will be permanently deleted.
             </p>
 
@@ -698,14 +708,14 @@ export function MyProfile() {
               <button
                 onClick={() => setWorkflowPendingDelete(null)}
                 disabled={deletingWorkflowId === workflowPendingDelete.id}
-                className="flex-1 rounded-[var(--cuerate-r-pill)] border border-[var(--cuerate-text-3)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-2)] hover:bg-[var(--cuerate-surface)] disabled:opacity-60"
+                className="flex-1 rounded-[var(--waltube-r-pill)] border border-[var(--waltube-text-3)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-2)] hover:bg-[var(--waltube-surface)] disabled:opacity-60"
               >
                 Cancel
               </button>
               <button
                 onClick={() => void handleDeleteWorkflow(workflowPendingDelete.id)}
                 disabled={deletingWorkflowId === workflowPendingDelete.id}
-                className="flex-1 rounded-[var(--cuerate-r-pill)] border border-red-500/40 bg-red-500/20 px-4 py-3 font-accent text-sm font-medium text-red-200 hover:bg-red-500/30 disabled:opacity-60"
+                className="flex-1 rounded-[var(--waltube-r-pill)] border border-red-500/40 bg-red-500/20 px-4 py-3 font-accent text-sm font-medium text-red-200 hover:bg-red-500/30 disabled:opacity-60"
               >
                 {deletingWorkflowId === workflowPendingDelete.id ? (
                   <span className="inline-flex items-center gap-2">
@@ -723,23 +733,23 @@ export function MyProfile() {
 
       {promptPendingDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[var(--cuerate-r-xl)] border border-red-500/30 bg-[var(--cuerate-bg)] p-5">
+          <div className="w-full max-w-md rounded-[var(--waltube-r-xl)] border border-red-500/30 bg-[var(--waltube-bg)] p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-primary text-xl font-semibold text-[var(--cuerate-text-1)]">Delete post?</h3>
+              <h3 className="font-primary text-xl font-semibold text-[var(--waltube-text-1)]">Delete post?</h3>
               <button
                 onClick={() => setPromptPendingDelete(null)}
                 disabled={deletingPromptId === promptPendingDelete.id}
-                className="rounded-full p-2 hover:bg-[var(--cuerate-surface)] disabled:opacity-50"
+                className="rounded-full p-2 hover:bg-[var(--waltube-surface)] disabled:opacity-50"
                 aria-label="Close delete confirmation dialog"
               >
-                <X className="h-4 w-4 text-[var(--cuerate-text-2)]" />
+                <X className="h-4 w-4 text-[var(--waltube-text-2)]" />
               </button>
             </div>
 
-            <p className="mb-1 font-accent text-sm text-[var(--cuerate-text-1)]">
+            <p className="mb-1 font-accent text-sm text-[var(--waltube-text-1)]">
               This action cannot be undone.
             </p>
-            <p className="mb-5 font-accent text-xs text-[var(--cuerate-text-2)]">
+            <p className="mb-5 font-accent text-xs text-[var(--waltube-text-2)]">
               The post and its uploaded media files will be permanently deleted.
             </p>
 
@@ -747,14 +757,14 @@ export function MyProfile() {
               <button
                 onClick={() => setPromptPendingDelete(null)}
                 disabled={deletingPromptId === promptPendingDelete.id}
-                className="flex-1 rounded-[var(--cuerate-r-pill)] border border-[var(--cuerate-text-3)] px-4 py-3 font-accent text-sm text-[var(--cuerate-text-2)] hover:bg-[var(--cuerate-surface)] disabled:opacity-60"
+                className="flex-1 rounded-[var(--waltube-r-pill)] border border-[var(--waltube-text-3)] px-4 py-3 font-accent text-sm text-[var(--waltube-text-2)] hover:bg-[var(--waltube-surface)] disabled:opacity-60"
               >
                 Cancel
               </button>
               <button
                 onClick={() => void handleDeletePrompt(promptPendingDelete.id)}
                 disabled={deletingPromptId === promptPendingDelete.id}
-                className="flex-1 rounded-[var(--cuerate-r-pill)] border border-red-500/40 bg-red-500/20 px-4 py-3 font-accent text-sm font-medium text-red-200 hover:bg-red-500/30 disabled:opacity-60"
+                className="flex-1 rounded-[var(--waltube-r-pill)] border border-red-500/40 bg-red-500/20 px-4 py-3 font-accent text-sm font-medium text-red-200 hover:bg-red-500/30 disabled:opacity-60"
               >
                 {deletingPromptId === promptPendingDelete.id ? (
                   <span className="inline-flex items-center gap-2">

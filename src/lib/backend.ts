@@ -41,7 +41,7 @@ import {
 // Local mirror of the authenticated user, so mock mode (no Firebase) can
 // keep a session in localStorage. With zkLogin in production, the source of
 // truth is the Enoki session managed by the AuthProvider.
-const LOCAL_AUTH_USER_KEY = 'cuerate.auth.user';
+const LOCAL_AUTH_USER_KEY = 'WalTube.auth.user';
 const authListeners = new Set<(user: User | null) => void>();
 const mockPaidLikes: PaidLike[] = [];
 

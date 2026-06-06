@@ -64,16 +64,16 @@ export function ZkLoginCallback() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
       <div className="ambient-glow" />
       <div className="w-full max-w-md relative z-10 text-center">
-        <div className="glass-surface border border-[var(--cuerate-text-3)] rounded-[var(--cuerate-r-xl)] p-8 card-top-edge">
+        <div className="glass-surface border border-[var(--waltube-text-3)] rounded-[var(--waltube-r-xl)] p-8 card-top-edge">
           {error ? (
             <>
-              <h1 className="font-primary font-bold text-xl text-[var(--cuerate-text-1)] mb-3">
+              <h1 className="font-primary font-bold text-xl text-[var(--waltube-text-1)] mb-3">
                 Could not finish sign-in
               </h1>
               <p className="font-accent text-sm text-red-300 mb-4 break-words">{error}</p>
               <button
                 onClick={() => navigate('/auth', { replace: true })}
-                className="w-full rounded-[var(--cuerate-r-pill)] bg-[var(--cuerate-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow hover:opacity-90 transition-opacity"
+                className="w-full rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)] px-4 py-3 font-accent text-sm font-medium text-white indigo-glow hover:opacity-90 transition-opacity"
               >
                 Back to sign-in
               </button>
@@ -81,12 +81,12 @@ export function ZkLoginCallback() {
           ) : (
             <>
               <div className="flex justify-center mb-4">
-                <Loader2 className="h-8 w-8 animate-spin text-[var(--cuerate-blue)]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[var(--waltube-blue)]" />
               </div>
-              <h1 className="font-primary font-bold text-xl text-[var(--cuerate-text-1)] mb-1">
+              <h1 className="font-primary font-bold text-xl text-[var(--waltube-text-1)] mb-1">
                 {status}
               </h1>
-              <p className="font-accent text-xs text-[var(--cuerate-text-2)]">
+              <p className="font-accent text-xs text-[var(--waltube-text-2)]">
                 Deriving your Sui wallet from your Google credential.
               </p>
             </>

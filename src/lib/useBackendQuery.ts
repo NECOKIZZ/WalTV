@@ -21,15 +21,20 @@ export function useBackendQuery<T>(
     async function run() {
       setIsLoading(true);
       setError(null);
+      const start = performance.now();
 
       try {
         const result = await loader();
+        const duration = Math.round(performance.now() - start);
         if (isMounted) {
           setData(result);
+          console.log(`[useBackendQuery] ${duration}ms`);
         }
       } catch (err) {
+        const duration = Math.round(performance.now() - start);
         if (isMounted) {
           setError(err instanceof Error ? err.message : 'Something went wrong while loading backend data.');
+          console.error(`[useBackendQuery] FAILED after ${duration}ms:`, err);
         }
       } finally {
         if (isMounted) {

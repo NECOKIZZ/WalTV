@@ -5,6 +5,7 @@ import { authApi, followsApi, metaApi, usersApi } from '../../lib/backend';
 import { useBackendQuery } from '../../lib/useBackendQuery';
 import { useAuth } from '../../lib/auth-context';
 import { truncateText } from '../../lib/text';
+import { Avatar } from '../components/Avatar';
 
 type Step = 1 | 2 | 3;
 
@@ -119,10 +120,10 @@ export function Onboarding() {
               key={index}
               className={`w-2 h-2 rounded-full transition-all ${
                 index === step
-                  ? 'w-8 bg-[var(--cuerate-indigo)] indigo-glow'
+                  ? 'w-8 bg-[var(--waltube-indigo)] indigo-glow'
                   : index < step
-                  ? 'bg-[var(--cuerate-indigo)]/50'
-                  : 'bg-[var(--cuerate-text-3)]'
+                  ? 'bg-[var(--waltube-indigo)]/50'
+                  : 'bg-[var(--waltube-text-3)]'
               }`}
             />
           ))}
@@ -132,22 +133,22 @@ export function Onboarding() {
           <div className="max-w-md w-full text-center space-y-6">
             <div className="mb-8">
               <div className="flex items-center justify-center gap-2 mb-4">
-                <span className="font-primary font-bold text-4xl text-white">Cue</span>
-                <span className="font-primary font-bold text-4xl text-[var(--cuerate-blue)] blue-glow">
-                  rate
+                <span className="font-primary font-bold text-4xl text-white">Wal</span>
+                <span className="font-primary font-bold text-4xl text-[var(--waltube-indigo)]">
+                  Tube
                 </span>
               </div>
-              <p className="font-accent text-lg text-[var(--cuerate-text-1)] mb-2">
+              <p className="font-accent text-lg text-[var(--waltube-text-1)] mb-2">
                 curate your prompts. rate the results.
               </p>
-              <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+              <p className="font-accent text-sm text-[var(--waltube-text-2)]">
                 The home for AI video prompts.
               </p>
             </div>
 
             <button
               onClick={handleContinue}
-              className="w-full py-4 rounded-[var(--cuerate-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--cuerate-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity"
+              className="w-full py-4 rounded-[var(--waltube-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--waltube-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity"
             >
               Get Started
             </button>
@@ -157,10 +158,10 @@ export function Onboarding() {
         {step === 2 && (
           <div className="max-w-md w-full space-y-6">
             <div className="text-center mb-8">
-              <h2 className="font-primary font-bold text-2xl text-[var(--cuerate-text-1)] mb-2">
+              <h2 className="font-primary font-bold text-2xl text-[var(--waltube-text-1)] mb-2">
                 Which AI video tools do you use?
               </h2>
-              <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+              <p className="font-accent text-sm text-[var(--waltube-text-2)]">
                 Select all that apply
               </p>
             </div>
@@ -170,20 +171,20 @@ export function Onboarding() {
                 <button
                   key={model}
                   onClick={() => toggleModel(model)}
-                  className={`relative p-6 rounded-[var(--cuerate-r-xl)] text-center transition-all ${
+                  className={`relative p-6 rounded-[var(--waltube-r-xl)] text-center transition-all ${
                     selectedModels.includes(model)
-                      ? 'glass-surface border-2 border-[var(--cuerate-indigo)] indigo-glow'
-                      : 'glass-surface border border-[var(--cuerate-text-3)] hover:border-[var(--cuerate-indigo)]/30'
+                      ? 'glass-surface border-2 border-[var(--waltube-indigo)] indigo-glow'
+                      : 'glass-surface border border-[var(--waltube-text-3)] hover:border-[var(--waltube-indigo)]/30'
                   }`}
                 >
-                  <div className="font-primary font-semibold text-lg text-[var(--cuerate-text-1)] mb-1">
+                  <div className="font-primary font-semibold text-lg text-[var(--waltube-text-1)] mb-1">
                     {model}
                   </div>
-                  <div className="font-accent text-xs text-[var(--cuerate-text-2)]">
+                  <div className="font-accent text-xs text-[var(--waltube-text-2)]">
                     AI Video
                   </div>
                   {selectedModels.includes(model) && (
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[var(--cuerate-indigo)] flex items-center justify-center indigo-glow">
+                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[var(--waltube-indigo)] flex items-center justify-center indigo-glow">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                   )}
@@ -194,7 +195,7 @@ export function Onboarding() {
             <button
               onClick={handleContinue}
               disabled={selectedModels.length === 0}
-              className="w-full py-4 rounded-[var(--cuerate-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--cuerate-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-[var(--waltube-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--waltube-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
             </button>
@@ -204,17 +205,17 @@ export function Onboarding() {
         {step === 3 && (
           <div className="max-w-md w-full space-y-6">
             <div className="text-center mb-8">
-              <h2 className="font-primary font-bold text-2xl text-[var(--cuerate-text-1)] mb-2">
+              <h2 className="font-primary font-bold text-2xl text-[var(--waltube-text-1)] mb-2">
                 Follow some top creators
               </h2>
-              <p className="font-accent text-sm text-[var(--cuerate-text-2)]">
+              <p className="font-accent text-sm text-[var(--waltube-text-2)]">
                 to seed your feed
               </p>
             </div>
 
             <button
               onClick={followAll}
-              className="w-full py-3 rounded-[var(--cuerate-r-pill)] glass-surface border border-[var(--cuerate-indigo)] font-accent font-medium text-[var(--cuerate-indigo)] hover:bg-[var(--cuerate-indigo)]/10 transition-colors"
+              className="w-full py-3 rounded-[var(--waltube-r-pill)] glass-surface border border-[var(--waltube-indigo)] font-accent font-medium text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/10 transition-colors"
             >
               Follow All
             </button>
@@ -227,30 +228,31 @@ export function Onboarding() {
                   return (
                     <div
                       key={creator.uid}
-                      className="flex items-center gap-4 p-4 rounded-[var(--cuerate-r-lg)] glass-surface card-top-edge"
+                      className="flex items-center gap-4 p-4 rounded-[var(--waltube-r-lg)] glass-surface card-top-edge"
                     >
-                      <img
+                      <Avatar
                         src={creator.avatarUrl}
                         alt={creator.handle}
-                        className="w-12 h-12 rounded-full border-2 border-[var(--cuerate-indigo)] object-cover object-center"
+                        size={48}
+                        className="border-2 border-[var(--waltube-indigo)]"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-primary font-medium text-[var(--cuerate-text-1)] truncate" title={creator.displayName}>
+                        <p className="font-primary font-medium text-[var(--waltube-text-1)] truncate" title={creator.displayName}>
                           {displayName}
                         </p>
-                        <p className="font-accent text-sm text-[var(--cuerate-text-2)] truncate" title={`@${creator.handle}`}>
+                        <p className="font-accent text-sm text-[var(--waltube-text-2)] truncate" title={`@${creator.handle}`}>
                           @{displayHandle}
                         </p>
-                        <p className="font-accent text-xs text-[var(--cuerate-text-2)] mt-1">
+                        <p className="font-accent text-xs text-[var(--waltube-text-2)] mt-1">
                           {creator.primaryModels.join(', ')}
                         </p>
                       </div>
                       <button
                         onClick={() => toggleFollow(creator.uid)}
-                        className={`px-5 py-2 rounded-[var(--cuerate-r-pill)] font-accent text-sm font-medium transition-all ${
+                        className={`px-5 py-2 rounded-[var(--waltube-r-pill)] font-accent text-sm font-medium transition-all ${
                           followedCreators.includes(creator.uid)
-                            ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                            : 'glass-surface text-[var(--cuerate-text-1)]'
+                            ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                            : 'glass-surface text-[var(--waltube-text-1)]'
                         }`}
                       >
                         {followedCreators.includes(creator.uid) ? 'Following' : 'Follow'}
@@ -262,7 +264,7 @@ export function Onboarding() {
 
             <button
               onClick={handleContinue}
-              className="w-full py-4 rounded-[var(--cuerate-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--cuerate-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity"
+              className="w-full py-4 rounded-[var(--waltube-r-pill)] bg-gradient-to-r from-[#5500cc] to-[var(--waltube-blue)] text-white font-accent font-medium text-lg indigo-glow hover:opacity-90 transition-opacity"
             >
               Start Exploring
             </button>

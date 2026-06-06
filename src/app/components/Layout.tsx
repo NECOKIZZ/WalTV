@@ -56,8 +56,8 @@ export function Layout() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="max-w-md w-full glass-surface rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] p-8 text-center">
-          <span className="font-accent text-sm text-[var(--cuerate-text-2)]">Checking your account...</span>
+        <div className="max-w-md w-full glass-surface rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] p-8 text-center">
+          <span className="font-accent text-sm text-[var(--waltube-text-2)]">Checking your account...</span>
         </div>
       </div>
     );
@@ -68,19 +68,20 @@ export function Layout() {
   }
 
   return (
-    <div className="cuerate-container min-h-screen flex relative">
+    <div className="waltube-container min-h-screen flex relative">
       {/* Ambient glow */}
       <div className="ambient-glow" />
+      <div className="ambient-glow-secondary" />
 
       {/* Desktop Sidebar */}
-      <aside className="desktop-sidebar fixed left-0 top-0 h-screen w-64 flex-col justify-between glass-nav border-r border-[var(--cuerate-text-3)] z-50">
+      <aside className="desktop-sidebar fixed left-0 top-0 h-screen w-64 flex-col justify-between glass-nav border-r border-[var(--waltube-text-3)] z-50">
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-[var(--cuerate-text-3)]">
+          <div className="p-6 border-b border-[var(--waltube-text-3)]">
             <div className="flex items-center gap-2">
               <div className="flex items-center">
-                <span className="font-primary font-bold text-2xl text-white">Cue</span>
-                <span className="font-primary font-bold text-2xl text-[var(--cuerate-indigo)]">rate</span>
+                <span className="font-primary font-bold text-2xl text-white">Wal</span>
+                <span className="font-primary font-bold text-2xl text-[var(--waltube-indigo)]">Tube</span>
               </div>
             </div>
           </div>
@@ -94,10 +95,10 @@ export function Layout() {
                   <button
                     key={path}
                     onClick={() => navigateWithAuth(path)}
-                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-[var(--cuerate-r-md)] font-accent transition-all ${
+                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-[var(--waltube-r-md)] font-accent transition-all ${
                       active
-                        ? 'bg-[var(--cuerate-indigo)] text-white indigo-glow'
-                        : 'text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-surface)]'
+                        ? 'bg-[var(--waltube-indigo)] text-white indigo-glow'
+                        : 'text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)] hover:bg-[var(--waltube-surface)]'
                     }`}
                   >
                     <Icon className="w-6 h-6" />
@@ -111,10 +112,10 @@ export function Layout() {
           </nav>
 
           {/* Bottom Actions */}
-          <div className="p-4 border-t border-[var(--cuerate-text-3)] space-y-2">
+          <div className="p-4 border-t border-[var(--waltube-text-3)] space-y-2">
             <button
               onClick={() => navigate(user ? '/profile' : '/auth')}
-              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--cuerate-r-md)] text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-surface)] transition-all"
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--waltube-r-md)] text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)] hover:bg-[var(--waltube-surface)] transition-all"
             >
               <User className="w-6 h-6" />
               <span className="max-w-[160px] truncate text-base font-accent" title={user ? `@${user.handle}` : 'Log In / Sign Up'}>
@@ -123,24 +124,24 @@ export function Layout() {
             </button>
             <button
               onClick={() => navigate('/notifications')}
-              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--cuerate-r-md)] text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-surface)] transition-all relative"
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--waltube-r-md)] text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)] hover:bg-[var(--waltube-surface)] transition-all relative"
             >
               <Bell className="w-6 h-6" />
               <span className="text-base font-accent">Notifications</span>
               {hasUnreadNotifications && (
-                <div className="absolute left-8 top-2 w-2 h-2 rounded-full bg-[var(--cuerate-blue)] blue-glow" />
+                <div className="absolute left-8 top-2 w-2 h-2 rounded-full bg-[var(--waltube-blue)] blue-glow" />
               )}
             </button>
             <button
               onClick={() => navigate('/settings')}
-              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--cuerate-r-md)] text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-surface)] transition-all"
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--waltube-r-md)] text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)] hover:bg-[var(--waltube-surface)] transition-all"
             >
               <Settings className="w-6 h-6" />
               <span className="text-base font-accent">Settings</span>
             </button>
             <button
               onClick={() => setWalletOpen(true)}
-              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--cuerate-r-md)] text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)] hover:bg-[var(--cuerate-surface)] transition-all"
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-[var(--waltube-r-md)] text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)] hover:bg-[var(--waltube-surface)] transition-all"
             >
               <Wallet className="w-6 h-6" />
               <span className="text-base font-accent">Wallet</span>
@@ -148,7 +149,7 @@ export function Layout() {
             {user && (
               <button
                 onClick={() => void signOut().then(() => navigate('/auth'))}
-                className="w-full flex items-center justify-center px-4 py-3 rounded-[var(--cuerate-r-md)] bg-[var(--cuerate-indigo)]/10 text-[var(--cuerate-indigo)] hover:bg-[var(--cuerate-indigo)]/20 transition-all font-accent"
+                className="w-full flex items-center justify-center px-4 py-3 rounded-[var(--waltube-r-md)] bg-[var(--waltube-indigo)]/10 text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/20 transition-all font-accent"
               >
                 Log Out
               </button>
@@ -161,7 +162,7 @@ export function Layout() {
       {!isPromptDetailRoute && (
         <button
           onClick={() => navigateWithAuth('/post')}
-          className="fixed bottom-24 md:bottom-8 right-5 md:right-8 w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-[var(--cuerate-blue)] text-white shadow-lg blue-glow hover:scale-110 hover:shadow-[0_0_32px_var(--cuerate-blue-glow)] transition-all duration-300 z-50"
+          className="fixed bottom-24 md:bottom-8 right-5 md:right-8 w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-full bg-[var(--waltube-blue)] text-white shadow-lg blue-glow hover:scale-110 hover:shadow-[0_0_32px_var(--waltube-blue-glow)] transition-all duration-300 z-50"
         >
           <Plus className="w-7 h-7 md:w-8 md:h-8" />
         </button>
@@ -174,7 +175,7 @@ export function Layout() {
 
       {/* Mobile Bottom Navigation */}
       <nav
-        className="mobile-nav fixed bottom-4 left-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-[var(--cuerate-r-xl)] border border-[var(--cuerate-text-3)] bg-[var(--cuerate-surface)]/96 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.28)] md:hidden"
+        className="mobile-nav fixed bottom-4 left-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)]/96 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.28)] md:hidden"
         style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="w-full px-2">
@@ -186,7 +187,7 @@ export function Layout() {
                   <button
                     key={item.action}
                     onClick={() => setWalletOpen(true)}
-                    className="flex w-full flex-col items-center justify-center gap-1 transition-all min-h-[48px] px-1 py-1 rounded-[var(--cuerate-r-md)] text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]"
+                    className="flex w-full flex-col items-center justify-center gap-1 transition-all min-h-[48px] px-1 py-1 rounded-[var(--waltube-r-md)] text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]"
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-accent text-[10px] font-normal">{item.label}</span>
@@ -198,10 +199,10 @@ export function Layout() {
                 <button
                   key={item.path}
                   onClick={() => navigateWithAuth(item.path)}
-                  className={`flex w-full flex-col items-center justify-center gap-1 transition-all min-h-[48px] px-1 py-1 rounded-[var(--cuerate-r-md)] ${
+                  className={`flex w-full flex-col items-center justify-center gap-1 transition-all min-h-[48px] px-1 py-1 rounded-[var(--waltube-r-md)] ${
                     active
-                      ? 'text-[var(--cuerate-indigo)] bg-[var(--cuerate-indigo)]/10'
-                      : 'text-[var(--cuerate-text-2)] hover:text-[var(--cuerate-text-1)]'
+                      ? 'text-[var(--waltube-indigo)] bg-[var(--waltube-indigo)]/10'
+                      : 'text-[var(--waltube-text-2)] hover:text-[var(--waltube-text-1)]'
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${active ? 'indigo-glow' : ''}`} />

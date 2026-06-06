@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router';
 import { Workflow } from '../../lib/types';
 import { truncateText } from '../../lib/text';
+import { Avatar } from './Avatar';
 
 interface WorkflowCardProps {
   workflow: Workflow;
@@ -123,38 +124,39 @@ export function WorkflowCard({
   };
 
   return (
-    <div className="prompt-masonry-item group rounded-[var(--cuerate-r-lg)] border border-[#f5a623]/30 bg-[linear-gradient(180deg,rgba(245,166,35,0.14),rgba(245,166,35,0.05))] p-4 shadow-[0_0_40px_rgba(245,166,35,0.08)]">
+    <div className="prompt-masonry-item glass-card rounded-[var(--waltube-r-lg)] p-4 card-top-edge cursor-pointer">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img
+          <Avatar
             src={workflow.authorAvatar}
             alt={workflow.authorHandle}
-            className="h-[34px] w-[34px] rounded-full border-2 border-[#f5a623] object-cover object-center"
+            size={34}
+            className="border-2 border-[var(--waltube-blue)]"
           />
           <div className="min-w-0">
             <button
               onClick={() => navigate(`/user/${workflow.authorHandle}`)}
-              className="max-w-[132px] truncate font-primary font-medium text-[var(--cuerate-text-1)] transition-colors hover:text-[#f5a623]"
+              className="max-w-[132px] truncate font-primary font-medium text-[var(--waltube-text-1)] transition-colors hover:text-[var(--waltube-indigo)]"
               title={`@${workflow.authorHandle}`}
             >
               @{displayAuthorHandle}
             </button>
             <div className="flex items-center gap-2">
-              <span className="font-accent text-xs text-[var(--cuerate-text-2)]">
+              <span className="font-accent text-xs text-[var(--waltube-text-2)]">
                 {formatDistanceToNow(workflow.createdAt, { addSuffix: true })}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="rounded-full border border-[#f5a623]/30 bg-black/20 px-3 py-1.5 font-accent text-xs font-medium text-[#ffd27c]">
+        <div className="rounded-full border border-amber-500/30 bg-black/20 px-3 py-1.5 font-accent text-xs font-medium text-amber-400">
           {workflow.stepCount}
         </div>
       </div>
 
       <button
         onClick={() => navigate(`/workflow/${workflow.id}`)}
-        className="group relative mb-4 block w-full overflow-hidden rounded-[var(--cuerate-r-lg)] text-left transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(245,166,35,0.22)]"
+        className="group relative mb-4 block w-full overflow-hidden rounded-[var(--waltube-r-lg)] text-left transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(245,158,11,0.18)]"
         style={{ aspectRatio: coverAspectRatio }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -191,14 +193,14 @@ export function WorkflowCard({
             className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors pointer-events-none"
             style={{ opacity: isHovering ? 0 : 1 }}
           >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#f5a623] bg-black/30 shadow-[0_0_28px_rgba(245,166,35,0.35)] backdrop-blur-sm transition-transform duration-200 group-hover:scale-105">
-              <Play className="ml-1 h-6 w-6 fill-[#f5a623] text-[#f5a623]" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-amber-400 bg-black/30 shadow-[0_0_28px_rgba(245,158,11,0.35)] backdrop-blur-sm transition-transform duration-200 group-hover:scale-105">
+              <Play className="ml-1 h-6 w-6 fill-amber-400 text-amber-400" />
             </div>
           </div>
         )}
       </button>
 
-      <h3 className="mb-3 font-primary text-xl font-semibold text-[var(--cuerate-text-1)]" title={workflow.title}>
+      <h3 className="mb-3 font-primary text-xl font-semibold text-[var(--waltube-text-1)]" title={workflow.title}>
         {displayTitle}
       </h3>
 
@@ -206,7 +208,7 @@ export function WorkflowCard({
         {workflow.tags.map((tag) => (
           <span
             key={`${workflow.id}-${tag}`}
-            className="rounded-full bg-[#f5a623]/10 px-3 py-1 font-accent text-sm text-[#ffd27c]"
+            className="rounded-full bg-amber-500/10 px-3 py-1 font-accent text-sm text-amber-400"
           >
             #{tag}
           </span>
@@ -216,10 +218,10 @@ export function WorkflowCard({
       <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => onLike?.(workflow.id)}
-          className={`flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--cuerate-r-pill)] px-4 py-3 font-accent text-sm font-medium transition-all ${
+          className={`flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--waltube-r-pill)] px-4 py-3 font-accent text-sm font-medium transition-all ${
             isLiked
               ? 'border border-red-500/30 bg-red-500/10 text-red-400'
-              : 'glass-surface text-[var(--cuerate-text-2)] hover:border-red-400/30 hover:text-red-300'
+              : 'glass-surface text-[var(--waltube-text-2)] hover:border-red-400/30 hover:text-red-300'
           }`}
         >
           <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-400' : ''}`} />
@@ -228,22 +230,22 @@ export function WorkflowCard({
 
         <button
           onClick={() => onSave?.(workflow.id)}
-          className={`flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--cuerate-r-pill)] px-4 py-3 font-accent text-sm font-medium transition-all ${
+          className={`flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--waltube-r-pill)] px-4 py-3 font-accent text-sm font-medium transition-all ${
             isSaved
-              ? 'border border-[#f5a623]/40 bg-[#f5a623]/12 text-[#ffd27c]'
-              : 'glass-surface text-[var(--cuerate-text-2)] hover:border-[#f5a623]/30 hover:text-[#ffd27c]'
+              ? 'border border-amber-500/40 bg-amber-500/12 text-amber-400'
+              : 'glass-surface text-[var(--waltube-text-2)] hover:border-amber-500/30 hover:text-amber-400'
           }`}
         >
-          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-[#f5a623]' : ''}`} />
+          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-amber-400' : ''}`} />
           <span>Save</span>
         </button>
 
         <button
           onClick={() => void handleShare()}
-          className={`flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--cuerate-r-pill)] px-4 py-3 font-accent text-sm font-medium transition-all ${
+          className={`flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--waltube-r-pill)] px-4 py-3 font-accent text-sm font-medium transition-all ${
             hasShared
               ? 'border border-[#4cce8a]/45 bg-[#4cce8a]/14 text-[#9ef5c6]'
-              : 'glass-surface text-[var(--cuerate-text-2)] hover:border-[#4cce8a]/35 hover:text-[#9ef5c6]'
+              : 'glass-surface text-[var(--waltube-text-2)] hover:border-[#4cce8a]/35 hover:text-[#9ef5c6]'
           }`}
           aria-label="Share workflow"
         >
@@ -254,7 +256,7 @@ export function WorkflowCard({
 
       <button
         onClick={() => navigate(`/workflow/${workflow.id}`)}
-        className="mt-4 flex w-full items-center justify-center rounded-[var(--cuerate-r-pill)] border border-[#f5a623]/20 bg-black/10 py-2 text-[#ffd27c] transition-all duration-200 hover:border-[#f5a623]/40 hover:bg-[#f5a623]/10"
+        className="mt-4 flex w-full items-center justify-center rounded-[var(--waltube-r-pill)] border border-amber-500/20 bg-black/10 py-2 text-amber-400 transition-all duration-200 hover:border-amber-500/40 hover:bg-amber-500/10"
         aria-label="Open workflow thread"
       >
         <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:translate-y-0.5" />
