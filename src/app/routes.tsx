@@ -12,21 +12,25 @@ import { ZkLoginCallback } from './screens/ZkLoginCallback';
 import { WorkflowDetail } from './screens/WorkflowDetail';
 import { PromptDetail } from './screens/PromptDetail';
 import { Settings } from './screens/Settings';
+import { Landing } from './screens/Landing';
 
 export const router = createBrowserRouter([
   {
     path: '/',
+    Component: Landing,
+  },
+  {
     Component: Layout,
     children: [
-      { index: true, Component: Feed },
-      { path: 'post', Component: Post },
-      { path: 'explore', Component: Explore },
-      { path: 'profile', Component: MyProfile },
-      { path: 'user/:handle', Component: UserProfile },
-      { path: 'notifications', Component: Notifications },
-      { path: 'settings', Component: Settings },
-      { path: 'workflow/:workflowId', Component: WorkflowDetail },
-      { path: 'prompt/:promptId', Component: PromptDetail },
+      { path: '/feed', Component: Feed },
+      { path: '/post', Component: Post },
+      { path: '/explore', Component: Explore },
+      { path: '/profile', Component: MyProfile },
+      { path: '/user/:handle', Component: UserProfile },
+      { path: '/notifications', Component: Notifications },
+      { path: '/settings', Component: Settings },
+      { path: '/workflow/:workflowId', Component: WorkflowDetail },
+      { path: '/prompt/:promptId', Component: PromptDetail },
     ],
   },
   {

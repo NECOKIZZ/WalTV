@@ -194,6 +194,8 @@ function deserializePrompt(id: string, data: Record<string, unknown>): Prompt {
     onchainAttributionTxDigest: data.onchainAttributionTxDigest ? String(data.onchainAttributionTxDigest) : undefined,
     walrusContentBlobId: data.walrusContentBlobId ? String(data.walrusContentBlobId) : undefined,
     walrusMetadataBlobId: data.walrusMetadataBlobId ? String(data.walrusMetadataBlobId) : undefined,
+    royaltyConfigId: data.royaltyConfigId ? String(data.royaltyConfigId) : undefined,
+    royaltyConfigTxDigest: data.royaltyConfigTxDigest ? String(data.royaltyConfigTxDigest) : undefined,
     createdAt: toDate(data.createdAt),
   };
 }
@@ -359,7 +361,7 @@ function buildFreshUserForAddress(input: { suiAddress: string; email?: string; h
     suiAddress: input.suiAddress,
     handle,
     displayName: handle,
-    avatarUrl: '',
+    avatarUrl: Math.random() < 0.5 ? '/walrus.png' : '/yeti.png',
     email: input.email,
     bio: '',
     links: {},
@@ -990,6 +992,8 @@ export const promptsApi = {
       onchainAttributionTxDigest: undefined,
       walrusContentBlobId: input.walrusContentBlobId,
       walrusMetadataBlobId: input.walrusMetadataBlobId,
+      royaltyConfigId: undefined,
+      royaltyConfigTxDigest: undefined,
       createdAt: new Date(),
     };
 
@@ -1391,6 +1395,8 @@ export const promptsApi = {
       onchainAttributionTxDigest?: string | null;
       walrusContentBlobId?: string | null;
       walrusMetadataBlobId?: string | null;
+      royaltyConfigId?: string | null;
+      royaltyConfigTxDigest?: string | null;
     },
   ): Promise<void> {
     if (!promptId || !userId) {
@@ -1402,6 +1408,8 @@ export const promptsApi = {
       onchainAttributionTxDigest: input.onchainAttributionTxDigest || undefined,
       walrusContentBlobId: input.walrusContentBlobId || undefined,
       walrusMetadataBlobId: input.walrusMetadataBlobId || undefined,
+      royaltyConfigId: input.royaltyConfigId || undefined,
+      royaltyConfigTxDigest: input.royaltyConfigTxDigest || undefined,
     });
 
     if (Object.keys(updates).length === 0) {

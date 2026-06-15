@@ -20,6 +20,11 @@ import {
   recordPromptAttributionOnchain,
 } from '../../lib/attribution';
 import {
+  createRoyaltyConfigOnchain,
+  isForkRoyaltiesEnabled,
+  sendRoyaltyPayment,
+} from '../../lib/royalties';
+import {
   isSuiAddress,
   isSuiPaidLikesEnabled,
   paidLikeAmountMist,
@@ -260,14 +265,26 @@ export function Feed() {
       if (!shouldPayCreator) return true;
 
       try {
-        const payment = await sendSuiPayment(
-          {
-            recipient: targetPrompt.authorUid,
-            amountMist: paidLikeAmountMist,
-          },
-          enokiFlow,
-          suiClient,
-        );
+        const hasRoyaltyConfig = isForkRoyaltiesEnabled && targetPrompt.royaltyConfigId;
+        console.log('[like] paid like firing', { promptId, hasRoyaltyConfig, recipient: targetPrompt.authorUid });
+
+        const payment = hasRoyaltyConfig
+          ? await sendRoyaltyPayment(
+              {
+                royaltyConfigId: targetPrompt.royaltyConfigId!,
+                amountMist: paidLikeAmountMist,
+              },
+              enokiFlow,
+              suiClient,
+            )
+          : await sendSuiPayment(
+              {
+                recipient: targetPrompt.authorUid,
+                amountMist: paidLikeAmountMist,
+              },
+              enokiFlow,
+              suiClient,
+            );
 
         await paymentsApi.recordPaidLike({
           promptId,
@@ -278,8 +295,10 @@ export function Feed() {
           txDigest: payment.txDigest,
           network: payment.network,
         });
+        console.log('[like] paid like tx ok:', payment.txDigest);
         return true;
-      } catch {
+      } catch (error) {
+        console.error('[like] paid like failed — like will revert:', error);
         return false;
       }
     };
@@ -322,7 +341,8 @@ export function Feed() {
           },
         }));
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('[like] toggleLike failed — like will revert:', error);
         setLikedPrompts((prev) => {
           const newSet = new Set(prev);
           if (wasLiked) {
@@ -1004,8 +1024,70 @@ export function Feed() {
                   walrusMetadataBlobId: metadataBlobId,
                 };
                 console.log('[attribution] fork attributed onchain. tx:', attribution.txDigest, 'object:', attribution.attributionObjectId);
+
+                // ─── Create royalty config for this fork ──────────────────
+                console.log('[royalties] gate check', {
+                  isForkRoyaltiesEnabled,
+                  parentAuthorUid: forkModalPrompt.authorUid,
+                  parentIsSuiAddress: isSuiAddress(forkModalPrompt.authorUid),
+                  viewerUid: viewer.uid,
+                  viewerIsSuiAddress: isSuiAddress(viewer.uid),
+                });
+                if (isForkRoyaltiesEnabled && isSuiAddress(forkModalPrompt.authorUid) && isSuiAddress(viewer.uid)) {
+                  try {
+                    console.log('[royalties] calling create_royalty_config with', {
+                      promptId: createdFork.id,
+                      recipients: [
+                        { address: forkModalPrompt.authorUid, shareBps: 500 },
+                        { address: viewer.uid, shareBps: 9500 },
+                      ],
+                    });
+                    const royaltyResult = await createRoyaltyConfigOnchain(
+                      {
+                        promptId: createdFork.id,
+                        recipients: [
+                          { address: forkModalPrompt.authorUid, shareBps: 500 },
+                          { address: viewer.uid, shareBps: 9500 },
+                        ],
+                      },
+                      enokiFlow,
+                      suiClient,
+                    );
+                    console.log('[royalties] config created onchain. tx:', royaltyResult.txDigest, 'configId:', royaltyResult.royaltyConfigId);
+
+                    if (royaltyResult.royaltyConfigId) {
+                      await promptsApi.updateOnchainAttribution(createdFork.id, viewer.uid, {
+                        royaltyConfigId: royaltyResult.royaltyConfigId,
+                        royaltyConfigTxDigest: royaltyResult.txDigest,
+                      });
+                      createdFork = {
+                        ...createdFork,
+                        royaltyConfigId: royaltyResult.royaltyConfigId,
+                        royaltyConfigTxDigest: royaltyResult.txDigest,
+                      };
+                      console.log('[royalties] persisted royaltyConfigId to Firestore for fork:', createdFork.id);
+                    } else {
+                      console.warn('[royalties] tx ok but royaltyConfigId is null — could not parse RoyaltyConfig object from tx result. tx:', royaltyResult.txDigest);
+                    }
+                  } catch (royaltyError) {
+                    console.error('[royalties] could not create config:', royaltyError);
+                    if (royaltyError instanceof Error) {
+                      console.error('[royalties] error.message:', royaltyError.message);
+                      console.error('[royalties] error.stack:', royaltyError.stack);
+                    }
+                  }
+                } else {
+                  console.warn('[royalties] skipped — gate failed. See gate check log above.');
+                }
               } catch (error) {
                 console.warn('Could not record fork attribution onchain:', error);
+                if (import.meta.env.DEV) {
+                  createdFork = {
+                    ...createdFork,
+                    onchainAttributionTxDigest: '0xdevtx1234567890abcdef1234567890abcdef1234567890abcdef',
+                  };
+                  console.log('[dev] set fake onchainAttributionTxDigest for fork');
+                }
               }
             } else {
               console.log('[attribution] skipped fork attribution — config:', isAttributionConfigured, 'blobId:', contentBlobId);

@@ -271,8 +271,14 @@ export function Post() {
       walrusMetadataBlobId: metadataBlobId,
     });
 
+    console.log('[attribution] post gate check', {
+      isAttributionConfigured,
+      contentBlobId,
+      promptId: created.id,
+    });
     if (isAttributionConfigured && contentBlobId) {
       try {
+        console.log('[attribution] recording prompt attribution onchain...');
         const attribution = await recordPromptAttributionOnchain(
           {
             promptId: created.id,
@@ -282,6 +288,7 @@ export function Post() {
           enokiFlow,
           suiClient,
         );
+        console.log('[attribution] prompt attributed onchain. tx:', attribution.txDigest, 'object:', attribution.attributionObjectId);
 
         await promptsApi.updateOnchainAttribution(created.id, activeUser.uid, {
           onchainAttributionId: attribution.attributionObjectId,
@@ -289,9 +296,15 @@ export function Post() {
           walrusContentBlobId: contentBlobId,
           walrusMetadataBlobId: metadataBlobId,
         });
+        console.log('[attribution] persisted onchainAttributionId to Firestore for post:', created.id);
       } catch (error) {
-        console.warn('Could not record prompt attribution onchain:', error);
+        console.error('[attribution] FAILED to record prompt attribution onchain — post will have no onchainAttributionId:', error);
+        if (error instanceof Error) {
+          console.error('[attribution] error.message:', error.message);
+        }
       }
+    } else {
+      console.warn('[attribution] skipped — isAttributionConfigured:', isAttributionConfigured, 'contentBlobId:', contentBlobId);
     }
   };
 
@@ -444,7 +457,7 @@ export function Post() {
         await publishWorkflow();
       } else {
         await publishPrompt();
-        navigate('/');
+        navigate('/feed');
       }
     } catch (error) {
       setPublishError(error instanceof Error ? error.message : 'Could not publish.');
@@ -500,7 +513,7 @@ export function Post() {
             New Post
           </h1>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/feed')}
             className="p-2 rounded-full hover:bg-[var(--waltube-surface)] transition-colors"
           >
             <X className="w-5 h-5 text-[var(--waltube-text-1)]" />

@@ -92,7 +92,10 @@ module cuerate_attribution::attribution {
             created_at_ms,
         });
 
-        transfer::public_transfer(record, creator);
+        // Share the record so any account can pass it as `&AttributionRecord`
+        // when forking. Owned objects could only be used by their owner, which
+        // blocked cross-account forks.
+        transfer::public_share_object(record);
     }
 
     public entry fun record_fork(
@@ -144,7 +147,8 @@ module cuerate_attribution::attribution {
             created_at_ms,
         });
 
-        transfer::public_transfer(record, fork_author);
+        // Share so descendants can fork-of-fork via &AttributionRecord input.
+        transfer::public_share_object(record);
     }
 
     public fun prompt_key(record: &AttributionRecord): vector<u8> {

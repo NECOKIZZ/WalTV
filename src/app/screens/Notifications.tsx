@@ -106,7 +106,7 @@ export function Notifications() {
         <div className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/feed')}
               className="p-2 rounded-full hover:bg-[var(--waltube-surface)] transition-colors md:hidden"
             >
               <ArrowLeft className="w-5 h-5 text-[var(--waltube-text-1)]" />

@@ -22,7 +22,7 @@ export function Layout() {
   const isPromptDetailRoute = location.pathname.startsWith('/prompt/');
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Feed' },
+    { path: '/feed', icon: Home, label: 'Feed' },
     { path: '/explore', icon: Compass, label: 'Explore' },
     { path: '/notifications', icon: Bell, label: 'Alerts' },
     { path: '/profile', icon: User, label: 'Profile' },
@@ -31,14 +31,14 @@ export function Layout() {
   ].filter((entry) => !(isPromptDetailRoute && 'path' in entry && entry.path === '/post'));
 
   const desktopNavItems = [
-    { path: '/', icon: Home, label: 'Feed' },
+    { path: '/feed', icon: Home, label: 'Feed' },
     { path: '/explore', icon: Compass, label: 'Explore' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];
 
   const isActive = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
+    if (path === '/feed') {
+      return location.pathname === '/feed' || location.pathname === '/';
     }
     return location.pathname.startsWith(path);
   };

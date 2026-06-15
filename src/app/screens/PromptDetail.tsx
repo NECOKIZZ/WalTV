@@ -33,7 +33,7 @@ export function PromptDetail() {
         <div className="mx-auto max-w-3xl rounded-[var(--waltube-r-xl)] border border-[var(--waltube-text-3)] bg-[var(--waltube-surface)] p-8 text-center">
           <p className="font-primary text-2xl text-[var(--waltube-text-1)]">Prompt not found</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/feed')}
             className="mt-6 rounded-[var(--waltube-r-pill)] bg-[var(--waltube-indigo)] px-5 py-3 font-accent text-sm font-medium text-white"
           >
             Back to feed

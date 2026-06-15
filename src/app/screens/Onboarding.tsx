@@ -106,7 +106,7 @@ export function Onboarding() {
       }
     }
 
-    navigate('/');
+    navigate('/feed');
   };
 
   return (

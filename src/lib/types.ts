@@ -67,6 +67,8 @@ export interface Prompt {
   onchainAttributionTxDigest?: string;
   walrusContentBlobId?: string;
   walrusMetadataBlobId?: string;
+  royaltyConfigId?: string;
+  royaltyConfigTxDigest?: string;
   createdAt: Date;
 }
 

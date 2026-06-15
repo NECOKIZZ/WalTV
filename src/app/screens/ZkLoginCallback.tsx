@@ -45,7 +45,7 @@ export function ZkLoginCallback() {
 
         if (cancelled) return;
 
-        navigate(user.hasOnboarded ? '/' : '/onboarding', { replace: true });
+        navigate(user.hasOnboarded ? '/feed' : '/onboarding', { replace: true });
         return session;
       } catch (err) {
         if (cancelled) return;

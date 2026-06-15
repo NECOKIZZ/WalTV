@@ -6,24 +6,51 @@
 
 ## 1. The Problem
 
-AI video creation is exploding — Sora, Runway, Kling, Pika, and dozens of other tools are generating millions of clips every day. But the ecosystem around these creators is broken in three fundamental ways:
+### The Market Is Exploding
 
-### No Attribution
-When someone shares a viral AI prompt, there is no way to prove who created it originally. Copy-paste culture strips creators of credit. A prompt that gets remixed 100 times has no visible family tree.
+AI video creation didn't exist as a category three years ago. Today it's a multi-billion dollar industry. The tools — Sora, Runway, Kling, Pika, Hailuo — are generating millions of clips every day. A new class of creator has emerged: people who don't hold cameras but understand models, know how to craft prompts, and can produce cinematic content from a text box. They are building audiences, developing techniques, and creating genuine intellectual value.
 
-### No Permanence
-Prompts, videos, and workflows live on centralized servers — company-owned databases that can delete content, shut down, or change terms overnight. A creator's entire portfolio can disappear because a startup ran out of money.
+The AI video generation market was valued at roughly $4 billion in 2024 and is projected to grow at over 30% annually through the next decade. The creators driving this are at the center of the fastest-growing content category on the internet.
 
-### No Monetization
-The people who write the best prompts get nothing. Instagram and TikTok built billion-dollar businesses on creator content without paying creators fairly. AI prompt creators face the exact same problem — their intellectual labor generates value for platforms and other users, but they have no way to capture that value.
+And the platforms are actively working against them.
+
+### The Platforms Are Hostile
+
+Traditional platforms don't know what to do with AI creators — so they've decided to penalize them.
+
+YouTube introduced mandatory AI content disclosure requirements in 2024 and updated its monetization policy in July 2025 to demonetize AI-generated videos that lack what it defines as "sufficient human creative input." The policy is vague by design, giving the platform discretion to cut revenue from AI creators whenever advertiser pressure demands it.
+
+TikTok removed over 51,000 synthetic media videos in the second half of 2025 alone — a 340% increase over the previous year — and permanently banned 8,600 accounts for AI-related violations. A fourth offense on TikTok now results in a permanent monetization ban.
+
+The pattern is clear: platforms built their businesses on creator content, then changed the rules when that content became inconvenient for their advertiser relationships. AI creators are the latest group to discover that monetization on someone else's platform is always conditional.
+
+### The Three Failures That Remain
+
+**No Attribution.** When someone shares a viral AI prompt, there is no way to prove who created it originally. Copy-paste culture strips creators of credit. A prompt that gets remixed 100 times has no visible family tree.
+
+**No Permanence.** Prompts, videos, and workflows live on centralized servers — company-owned databases that can delete content, restrict access, or shut down overnight. A creator's entire portfolio can disappear because a startup ran out of money, or because an algorithm update decided their content no longer fits the platform's brand safety guidelines.
+
+**No Monetization That Lasts.** The people who write the best prompts get nothing stable. Creator funds get cut. Monetization policies change. Ad revenue depends entirely on platform goodwill. The creator who builds an audience on someone else's platform is one policy update away from zero.
+
+### The Untapped B2B Layer
+
+There is a fourth problem nobody is talking about: brands and studios cannot find AI video talent efficiently.
+
+The demand for AI-generated video content in commercial contexts — advertising, branded content, product visualization, entertainment — is growing faster than the supply of skilled creators. Right now, a brand looking to hire the best Kling cinematographer or the creator who specializes in surreal product reveals has no structured way to find them. Talent is scattered across Instagram, X, Discord servers, and personal portfolios with no standardized way to evaluate skill or track record.
+
+WalTube creates a public, permanent, verifiable record of every creator's work — model expertise, prompt quality, fork influence, and audience engagement, all onchain. For the first time, a brand can search for "cinematic product reveal, Runway, 10k+ forks" and find the actual best person for the job — not the most followed person, but the most skilled one, with a cryptographic portfolio to back it up.
+
+This turns WalTube into more than a social platform. It becomes the talent layer of the AI video economy.
 
 ---
 
 ## 2. What WalTube Is
 
-WalTube is a mobile-first social platform where AI video creators share prompts, discover workflows, build followings, and earn from their work — built natively on the Sui blockchain.
+A creator posted a Kling prompt in March. 8,000 people copied it. She got zero credit and zero dollars. WalTube fixes that.
 
-Think **Instagram × GitHub for AI video prompts**, but with one critical difference: every piece of content is a permanent, verifiable, ownable digital asset.
+WalTube is a social platform for AI video creators to share prompts, discover workflows, build followings, and earn from their work — built natively on the Sui blockchain, accessible on any device.
+
+Every piece of content is a permanent, verifiable, ownable digital asset. For creators, that means getting paid and credited for work that currently earns them nothing. For brands and studios, it means a searchable, verifiable talent pool — find the best AI video creators by skill, model expertise, and proven output, not by follower count.
 
 ### The Name
 
@@ -32,99 +59,113 @@ Think **Instagram × GitHub for AI video prompts**, but with one critical differ
 
 ---
 
-## 3. Core Features
+## 3. Core Features — And Why They Win
 
-### 3.1 Prompt Cards
+### 3.1 Per-Like Payments (Paid Likes)
 
-The atomic unit of WalTube is the **Prompt Card** — a rich media post that contains:
+**What traditional platforms do:** Instagram, TikTok, and X give creators a heart icon. That's it. Monetization comes from brand deals you have to chase yourself, or a creator fund that pays fractions of a cent per thousand views — controlled entirely by the platform.
 
-- **Video or image output** — the actual generation result
-- **Prompt text** — the exact text used to create it
-- **Metadata** — AI model (Sora, Runway, Kling, Pika, Hailuo), style tags (cinematic, surreal, neon), mood label, difficulty level, camera notes
-- **Social actions** — Like, Save, Copy, Fork, Share
-- **Attribution** — Onchain record linking back to the original creator
+**What WalTube does:** Every like is an optional micro-payment. A fan taps like and sends 0.001 SUI directly to the creator's wallet in the same action. No platform cut. No minimum payout threshold. No waiting 30 days to withdraw. Wallet-to-wallet, instant, on every single like.
 
-Prompt cards are displayed in a responsive masonry feed with glassmorphism UI, shimmer loading states for perceived performance, and hover-to-play video previews.
+A prompt with 10,000 engaged fans doesn't generate an algorithm score. It generates real income — without ads, without sponsorships, without asking permission from anyone.
 
-### 3.2 Workflow Cards
+Technical: Implemented as a Sui smart contract triggered at the like action. Sub-cent transaction fees on Sui make this economically viable at any scale.
 
-Not all generations are single prompts. **Workflow Cards** are multi-step tutorials that walk viewers through complex pipelines — e.g., "Generate a character image → Animate with Runway → Add lip-sync with Hedra → Color grade with DaVinci."
+---
 
-Each workflow step includes:
-- Input media (starting frame, reference image, ingredients)
-- The prompt text for that step
-- The model/tool used
-- The result media
-- Optional notes and tips
+### 3.2 Fork Attribution — Onchain, Forever
 
-Workflows are visually distinguished with golden amber accents, step-count badges, and dedicated detail pages that function as interactive tutorials.
+**What traditional platforms do:** When someone copies your prompt, remixes your workflow, or builds on your creative work — you get nothing. No credit. No record. No way to even prove you made it first. Content theft is the default.
 
-### 3.3 The Fork System
-
-WalTube treats prompts like open-source code.
-
-- **Copy** — One-tap copy the prompt text to your clipboard. The original creator's "copies" counter increments.
-- **Fork** — Create a new prompt based on an existing one. The fork retains a permanent attribution chain (`forkedFromId` + `forkedFromAuthorHandle`) that links back to the original creator — and increasingly, an onchain Move contract record.
-
-This creates a **Git-like contribution graph** for creative work. Every viral prompt has a visible ancestry. Original creators get permanent, cryptographic credit even after 100 generations of remixes.
-
-### 3.4 Per-Like Streaming (Paid Likes)
-
-This is WalTube's killer monetization feature. Instead of a meaningless heart icon, every like can optionally send a micro-tip directly to the creator's Sui wallet — as little as 0.001 SUI.
-
-- Tippers see a confetti celebration on successful payment
-- Creators accumulate tips in real time
-- No platform cut. No minimum threshold. Direct wallet-to-wallet transfer.
-
-It turns social engagement into actual income. A prompt with 10,000 likes can generate meaningful revenue without ads, subscriptions, or sponsorships.
-
-### 3.5 Verifiable Storage on Walrus
-
-All media — prompt videos, thumbnails, avatars, workflow step media — is stored on **Walrus**, Sui's decentralized blob storage protocol.
-
-What this means practically:
-- **Content-addressed** — Every file has a permanent blob ID derived from its content. If the file changes, the ID changes. Tamper-proof by design.
-- **Censorship-resistant** — Files are sharded across 100+ storage nodes. No single entity can delete them.
-- **Permanent** — As long as storage epochs are paid (automatically managed), content lives forever.
-- **Verifiable** — Anyone can fetch a blob by ID and confirm it matches the hash recorded onchain.
-
-Switching between testnet and mainnet is a one-line config change. The storage layer is abstracted so creators never think about it — they just post, and their content becomes permanent.
-
-### 3.6 Collections & Saves
-
-Users organize saved prompts into curated **Collections** — e.g., "Cinematic Lighting," "Character Design," "Surreal Landscapes." Collections are private to the user and displayed on their profile.
-
-### 3.7 Discovery & Filtering
-
-- **Trending tags** — See which style tags (cinematic, neon, macro) are getting the most engagement
-- **Top creators** — Ranked by followers, with model expertise badges
-- **Model filters** — Filter the entire feed by AI tool (Sora, Runway, Kling, etc.)
-- **Style filters** — Filter by aesthetic tag
-
-### 3.8 Notifications
-
-Real-time notification system for:
-- Likes on your prompts/workflows
-- Forks of your prompts
-- New followers
-- Prompt saves
-
-### 3.9 On-Chain Attribution (Move Smart Contract)
-
-Every fork operation can create an onchain record via a Sui Move smart contract:
+**What WalTube does:** Every fork writes an immutable record to the Sui blockchain. The fork chain is permanent and public — it shows exactly who made what, who built on it, and how deep the remix tree goes. This isn't a badge. It's a cryptographic guarantee enforced by a Move smart contract.
 
 ```move
-struct PromptFork has key, store {
+public struct AttributionRecord has key, store {
     id: UID,
-    original_blob_id: vector<u8>,
+    prompt_key: vector<u8>,
+    content_blob_id: vector<u8>,
+    metadata_blob_id: vector<u8>,
+    parent_record_id: Option<ID>,
+    parent_prompt_key: Option<vector<u8>>,
+    root_prompt_key: vector<u8>,
     original_author: address,
-    fork_author: address,
+    creator: address,
     fork_depth: u64,
-    timestamp: u64,
+    created_at_ms: u64,
 }
 ```
 
-This transforms attribution from an honor system into a cryptographic guarantee.
+Original creators get credit even after 100 generations of remixes. The attribution doesn't expire, can't be deleted, and doesn't depend on WalTube staying online.
+
+---
+
+### 3.3 Smart Royalties
+
+**What traditional platforms do:** If your creative work inspires a thousand derivatives, you earn nothing from any of them. GitHub stars don't pay rent. Your original idea is free for everyone to monetize except you.
+
+**What WalTube does:** Fork royalties route earnings automatically back through the attribution chain. When a forked prompt earns money — through paid likes or marketplace sales — a percentage flows back to every creator in its ancestry, enforced by the Move contract.
+
+```
+Original Creator → Fork 1 → Fork 2 → Fork 3
+      ↑                ↑          ↑
+   Gets 5%          Gets 3%    Gets 2%
+   of everything    of Fork    of Fork
+   downstream       2 & 3      3 earnings
+```
+
+The contract supports arbitrary multi-generational chains (e.g., 5% → 3% → 2% across three levels). The current MVP implements a 5% / 95% parent-to-creator split for every fork, with the full chain computation ready to roll out. Even in its simplest form, this is how music royalties work — except fully automated, with zero middlemen, and verified on a public blockchain. No label. No publisher. No platform taking a cut of the cut. The contract executes; money moves.
+
+No platform in the AI creator space has this. Not CivitAI. Not PromptBase. Not anyone.
+
+---
+
+### 3.4 Walrus Storage — Permanent, Verifiable, Yours
+
+**What traditional platforms do:** Your content lives on their servers. They can delete it, demonetize it, restrict it, or simply shut down. Vine had 200 million users. It's gone. Every creator who built there lost everything overnight.
+
+**What WalTube does:** All media — prompt videos, workflow outputs, thumbnails, avatars — is stored on Walrus, Sui's decentralized blob storage protocol. Content is sharded across 100+ independent storage nodes. No single entity can delete it.
+
+Every file gets a permanent blob ID derived from its content. If the content changes, the ID changes — tamper-proof by design. Anyone can fetch any blob by ID and verify it matches the onchain hash. Your portfolio doesn't belong to WalTube. It belongs to the network.
+
+Practically: creators never think about any of this. They post. Their content becomes permanent. The infrastructure is invisible.
+
+---
+
+### 3.5 zkLogin — Web2 Onboarding, Web3 Ownership
+
+**What traditional Web3 platforms do:** They ask you to install MetaMask, write down a 12-word seed phrase, buy ETH for gas, then figure out how to connect a wallet. 95% of mainstream creators bounce before they ever post anything.
+
+**What WalTube does:** Sign in with Google. That's it. Behind the scenes, zkLogin (via Enoki) uses a zero-knowledge proof to derive a real Sui wallet address from the OAuth credential. No seed phrase. No browser extension. No crypto knowledge required. 45 seconds from landing page to first post.
+
+Web2 creators get the UX they already know. Web3 creators get native wallet integration. Both groups get a fully functional Sui wallet they actually own — without the traditional onboarding friction that has killed every mainstream Web3 social attempt so far.
+
+---
+
+### 3.6 Workflow Cards — The Feature No Other Platform Has
+
+**What traditional platforms do:** YouTube tutorials exist. Reddit threads exist. But there is no structured, interactive format for documenting multi-step AI generation pipelines. If you want to recreate someone's workflow, you're reading a wall of text and hoping you don't miss a step.
+
+**What WalTube does:** Workflow Cards are multi-step, interactive tutorials that walk through complex AI pipelines step by step — e.g., "Generate a character image → Animate with Runway → Add lip-sync with Hedra → Color grade with DaVinci." Each step shows the input, the exact prompt, the model used, and the result.
+
+This is the difference between a recipe and a photo of a finished meal. AI video creation is a multi-tool craft. Workflow Cards make that craft teachable, reproducible, and attributable. The creator who documents their pipeline owns that pipeline — onchain, permanently, with every fork credited back.
+
+---
+
+### 3.7 The Fork System
+
+**What traditional platforms do:** Remixing is informal. You screenshot, copy, repost. The original creator is invisible. There's no lineage, no credit, no way to measure influence.
+
+**What WalTube does:** Forks are a first-class action. One tap creates a new prompt with the original creator's attribution baked in — not as a courtesy, but as an onchain record. The fork tree is visible on every prompt. Creators can see exactly how their work has spread and evolved across the network.
+
+Combined with smart royalties, the fork system turns creative influence into measurable, monetizable value. The more your work gets remixed, the more you earn from every branch of the tree.
+
+---
+
+### 3.8 Prompt Cards — The Atomic Unit
+
+The base building block of WalTube. Every Prompt Card contains the video output, the exact prompt text, the AI model used, style tags, mood label, difficulty level, and camera notes. One-tap copy. One-tap fork. One-tap tip.
+
+This is the format that doesn't exist anywhere else: a structured, attributable, monetizable post specifically designed for AI-generated content. Not a tweet. Not a YouTube video. Not a GitHub gist. Something built for this medium from the ground up.
 
 ---
 
@@ -148,7 +189,9 @@ This transforms attribution from an honor system into a cryptographic guarantee.
 
 **zkLogin via Enoki** — Users sign in with Google (or Apple/Facebook). Behind the scenes, a zero-knowledge proof derives a Sui wallet address from their OAuth credential. No seed phrase. No browser extension. No crypto knowledge required.
 
-The onboarding flow is 3 steps: pick a handle, select your AI models, follow top creators. Takes under 60 seconds.
+Every Web3 social app before WalTube lost mainstream creators at the wallet setup screen. zkLogin eliminates that. Signing up means signing in with Google — 45 seconds from landing page to first post, with a real Sui wallet created invisibly in the background.
+
+The onboarding flow is 3 steps: pick a handle, select your AI models, follow top creators.
 
 ### 4.3 Backend / Data Layer
 
@@ -164,8 +207,9 @@ Firebase handles high-frequency, low-stakes social actions (likes, saves, copies
 
 | Contract | Purpose |
 |----------|---------|
-| **Attribution Package** | Records fork events onchain with original author, fork author, timestamp, and fork depth |
-| **Paid Like Tipping** | Wallet-to-wallet SUI transfers on every like |
+| **`cuerate_attribution`** | Records `AttributionRecord` objects onchain for every prompt and fork. Tracks original author, fork depth, parent record, and timestamp. |
+| **`waltube_royalties`** | Creates per-prompt `RoyaltyConfig` objects and atomically splits SUI payments across multiple recipients. `receive_payment` distributes to all configured recipients in a single transaction. |
+| **Paid Like Tipping** | Wallet-to-wallet SUI transfers on every like (direct transfer fallback when no royalty config exists). |
 
 ### 4.5 Storage Architecture
 
@@ -181,7 +225,7 @@ Content is immutable. The blob ID in Firestore is the single source of truth. If
 
 ### 4.6 Design System
 
-- **Mobile-first** — Optimized for 430px viewport, fully responsive to desktop
+- **Fully responsive** — Optimized across all devices, mobile through desktop
 - **Dark mode default** — Pure black (`#000000`) background
 - **Glassmorphism** — `rgba(255,255,255,0.035)` surfaces with backdrop blur
 - **No sharp edges** — Pill-shaped buttons (999px radius), heavily rounded cards
@@ -214,21 +258,29 @@ Content is immutable. The blob ID in Firestore is the single source of truth. If
 
 ---
 
-## 6. Competitive Differentiation
+## 6. Why WalTube Wins
 
-| Platform | Attribution | Permanence | Monetization | Web3 Native |
-|----------|------------|-----------|-------------|-------------|
-| Instagram | None | Centralized | Ads only | No |
-| TikTok | None | Centralized | Creator fund | No |
-| PromptBase | None | Centralized | Marketplace fees | No |
-| CivitAI | Basic | Centralized | Tips (platform cut) | No |
-| **WalTube** | **Onchain, cryptographic** | **Walrus decentralized** | **Direct, zero-fee** | **Yes** |
+| | Instagram / TikTok | CivitAI / PromptBase | **WalTube** |
+|---|---|---|---|
+| Attribution | None | Manual / honor system | Cryptographic, onchain, forever |
+| Content permanence | Centralized, deletable | Centralized, deletable | Walrus — 100+ nodes, immutable |
+| Monetization | Ad revenue share, algorithm-gated | Marketplace fees, platform cut on tips | Direct wallet-to-wallet, zero platform fee |
+| Remix earnings | Zero | Zero | Smart royalties — automatic, multi-generational |
+| Onboarding | Email/phone | Email/wallet | zkLogin — Google sign-in, 45 seconds |
+| Content format | Generic video/image posts | Model images, static prompts | Video-first Prompt Cards + Workflow Cards |
+| Web3 native | No | Partial | Yes — Walrus, Sui, zkLogin are load-bearing |
 
-WalTube is not just another social app with a wallet button. The Web3 integrations are **load-bearing**:
-- Walrus isn't an add-on — it is the storage layer
-- zkLogin isn't a sign-in option — it is the only auth method
-- Onchain attribution isn't a badge — it is the enforcement mechanism
-- Paid likes aren't a feature — they are the business model
+### The Single Sentence That Matters
+
+YouTube knows what you earn and takes 45%. On WalTube, the blockchain knows what you earn and takes 2%. The rest is yours — automatically, instantly, forever.
+
+### Why No One Else Has Built This
+
+The three technologies that make WalTube possible — Walrus permanent storage, Sui sub-cent transactions, and zkLogin frictionless onboarding — are all new. The window to build the definitive creator platform on this stack is open right now. It won't stay open.
+
+### On the Architecture Tradeoff
+
+Firebase handles high-frequency social actions (likes, saves, copies, follows) with sub-second latency. Walrus handles what actually matters — permanent media and verifiable blob ownership. This is a deliberate tradeoff: centralize low-stakes, high-frequency data; decentralize high-value, irreversible data. It's the correct call for this stage, and it's honest about what "decentralized" means in practice.
 
 ---
 
@@ -243,13 +295,100 @@ WalTube is not just another social app with a wallet button. The Web3 integratio
 
 ---
 
-## 8. Team & Vision
+## 8. Roadmap
+
+What's live now is the foundation. What's coming is where the business gets interesting.
+
+### V1 — Usage-Based Storage (Post-Hackathon)
+
+Per-GB annual pricing launches. Every user starts with 2GB free permanently. First paid plan at $0.99/year covering 3GB total. Every additional GB adds $0.50/year. Subscriptions only go up as content grows. Full inactivity policy enforced — six months no posts, two warnings, epochs stop at day 50.
+
+### V2 — Prompt Marketplace
+
+Creators list their best prompts at fixed SUI prices. Buyers receive a verified onchain copy. Platform takes 5% per sale. Every downstream fork of a purchased prompt still routes royalties back to the original creator automatically. This is the primary revenue line beyond storage.
+
+### V3 — In-App Fiat Offramp
+
+Creators earn in SUI. Most creators live in the real world. In-app offramping lets creators convert earnings directly to fiat without leaving the platform — no CEX account, no manual bridging, no friction. This is the feature that makes WalTube viable for creators who are not crypto-native. The details of the financial architecture are still being finalized, but the integration point is clear: earnings should be spendable wherever the creator needs them.
+
+### V3.5 — Brand & Studio Discovery Layer
+
+Every creator's onchain portfolio — prompts posted, forks generated, models mastered, engagement earned — becomes a structured, searchable talent profile. Brands and studios looking for AI video creators for commercial work can filter by model expertise, aesthetic style, fork influence, and verified output quality.
+
+This is a B2B revenue layer on top of the creator platform. A brand pays to access verified creator profiles and reach out directly. The creator owns their portfolio — it can't be deleted, can't be falsified, and doesn't depend on follower count to demonstrate skill. The best creators get found by the jobs that match them, not by whoever has the largest audience.
+
+### V4 — Direct Generation In-App
+
+Partner integrations with Kling, Runway, and Pika APIs. Creators generate directly inside WalTube using generation credits. The margin on credits subsidizes free-tier storage at scale. This closes the loop: discover a workflow, generate from it, publish it, earn from it — all in one place. This is the Series A story.
+
+### V5 — Creator Subscriptions
+
+Followers pay monthly SUI to access premium prompts, private workflows, and early drops. Fully onchain. Platform takes 5%. Think Patreon — but the payments are transparent, the creator owns the relationship, and the platform can never demonetize them.
+
+### Future Integrations
+
+**Paid Like Platform Fee** — Paid likes currently route 100% directly to creators with zero platform cut. This is intentional — it builds trust and removes friction at the most critical early stage. A small platform fee on paid likes may be introduced later once the creator economy on WalTube is self-sustaining, funded by volume rather than percentage.
+
+**Sponsored Sui Transactions** — Currently users pay their own Sui gas fees for onchain actions. Future integration of Sui's sponsored transaction feature will allow WalTube to absorb gas costs on behalf of users, making every onchain action — forks, paid likes, attribution writes — completely invisible and frictionless. Zero gas prompts. Zero crypto knowledge required. The full Web2 experience with full Web3 ownership underneath.
+
+---
+
+## 9. Proposed Financial Model
+
+### Free Tier
+
+Every creator who joins WalTube gets 2GB of permanent, decentralized storage — free, for as long as their account is active.
+
+This is not a trial. It is not a 30-day promotion. It is a genuine commitment to every creator who chooses this platform.
+
+Why do we do this? Because the entire value proposition of WalTube depends on creators trusting us with their work. A creator who posts their best prompts here needs to know that content is safe — not conditionally safe, not safe until we change our minds, but permanently safe. The 2GB free tier is how we prove that from day one, before they spend a single dollar.
+
+It also removes every barrier to entry. No credit card. No plan selection. No crypto wallet setup. Sign in with Google, start posting, your content is permanent immediately. That frictionless first experience is what converts curious visitors into committed creators.
+
+The cost to WalTube for this commitment is $0.046 per user per month — less than 5 cents. At any scale, this is one of the cheapest trust-building investments any platform can make.
+
+Cumulative upload tracking ensures the free tier cannot be abused — deleting content never resets the counter. The 2GB is a lifetime upload allowance, not a current storage reading.
+
+---
+
+### Usage Costs
+
+- First plan: **$0.99/year** (3GB total usage)
+- Every additional GB: **+$0.50/year**
+- Usage costs only go up as your content grows, never forced down
+
+The first plan is priced to feel like nothing — less than a dollar a year. Under the hood it silently recovers the cost of the creator's free tier while adding their first paid GB on top. To the user it simply feels like a fair, transparent storage fee.
+
+Every GB added after that costs $0.50/year. The more a creator posts, the more storage they need, the more their annual cost grows — but so does their earning potential from paid likes, marketplace sales, and fork royalties. For an active creator, storage costs become invisible against their earnings.
+
+---
+
+### Inactivity Policy
+
+- Inactive = no posts for 6 months, for any reason
+- Month 6: first warning sent
+- Month 6 + Day 25: second warning sent
+- Month 6 + Day 50: epochs stop, content expires naturally on Walrus
+
+Six months is deliberately generous. AI video creators work in bursts — some disappear for weeks then post prolifically. The inactivity clock only starts after 6 months of complete silence. Two warnings are sent before anything happens. Content does not get deleted — WalTube simply stops paying Walrus epoch renewals, and the content expires naturally on the network.
+
+This policy protects the platform from carrying the storage costs of abandoned accounts indefinitely, while giving every genuine creator more than enough time to return.
+
+---
+
+### User-Facing Explanation
+
+*"Your usage costs are calculated annually based on what you have on WalTube. More content, higher costs. Delete content, costs go down. Don't renew, your content expires. Simple."*
+
+---
+
+## 10. Team & Vision
 
 WalTube is built for the next generation of AI creators — the people who are right now figuring out how to make Sora produce cinematic masterpieces, how to chain Runway + Kling + Hedra into professional workflows, and how to build audiences around their creative process.
 
-The long-term vision is a full **prompt marketplace** where creators list their best prompts at fixed SUI prices, buyers receive a verified copy NFT, and every downstream fork automatically routes a royalty percentage back to the original creator — all enforced by Move smart contracts.
+The creator economy is a $250B market built almost entirely on platforms that extract value from creators while giving them the minimum necessary to stay. WalTube is built on the opposite principle: every dollar a creator earns is visible on a public blockchain, every remix of their work pays them automatically forever, and no algorithm decides what they're worth.
 
-The infrastructure is already here. Walrus gives us permanent storage. Sui gives us sub-second finality and sub-cent transactions. zkLogin gives us mainstream onboarding. WalTube connects all three into a product that AI creators actually want to use.
+The infrastructure is already here. Walrus gives us permanent storage. Sui gives us sub-second finality and sub-cent transactions. zkLogin gives us mainstream onboarding. WalTube connects all three into a product that AI creators actually want to use — and that pays them in a way no platform ever has.
 
 ---
 
