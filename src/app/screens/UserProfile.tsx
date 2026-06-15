@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Twitter, Instagram, Youtube, Globe } from 'lucide-react';
+import { ArrowLeft, Twitter, Instagram, Youtube, Globe, Wallet, Copy, Send, Loader2, ExternalLink } from 'lucide-react';
 import { followsApi, promptsApi, usersApi, workflowsApi } from '../../lib/backend';
 import { useAuth } from '../../lib/auth-context';
 import { useBackendQuery } from '../../lib/useBackendQuery';
 import { truncateText } from '../../lib/text';
+import { shortenSuiAddress } from '../../lib/sui';
+import { sendSuiPayment } from '../../lib/sui-payments';
+import { useSuiClient } from '@mysten/dapp-kit';
+import { useEnokiFlow } from '@mysten/enoki/react';
 import { Avatar } from '../components/Avatar';
 
 function buildExternalUrl(rawUrl?: string) {
@@ -39,6 +43,13 @@ export function UserProfile() {
   const [activeTab, setActiveTab] = useState<'prompts' | 'forks' | 'workflows'>('prompts');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [showTipForm, setShowTipForm] = useState(false);
+  const [tipAmount, setTipAmount] = useState('');
+  const [isTipping, setIsTipping] = useState(false);
+  const [tipError, setTipError] = useState<string | null>(null);
+  const [tipTxDigest, setTipTxDigest] = useState<string | null>(null);
+  const suiClient = useSuiClient();
+  const enokiFlow = useEnokiFlow();
   const { data: users, isLoading: usersAreLoading } = useBackendQuery(() => usersApi.getAllUsers(), [], []);
   const { data: prompts } = useBackendQuery(() => promptsApi.getFeedPrompts(), [], []);
   const { data: workflows } = useBackendQuery(() => workflowsApi.getFeedWorkflows(), [], []);
@@ -122,6 +133,51 @@ export function UserProfile() {
       });
   };
 
+  const handleSendTip = async () => {
+    if (!activeUser) {
+      navigate('/auth');
+      return;
+    }
+    if (!profileUser.suiAddress) {
+      setTipError('This user has no on-chain wallet address.');
+      return;
+    }
+
+    setTipError(null);
+    setTipTxDigest(null);
+
+    const parsed = Number(tipAmount);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setTipError('Enter a SUI amount greater than zero.');
+      return;
+    }
+
+    let amountMist: bigint;
+    try {
+      const mistFloat = Math.floor(parsed * 1_000_000_000);
+      amountMist = BigInt(mistFloat);
+    } catch {
+      setTipError('Invalid amount.');
+      return;
+    }
+
+    setIsTipping(true);
+    try {
+      const result = await sendSuiPayment(
+        { recipient: profileUser.suiAddress, amountMist },
+        enokiFlow,
+        suiClient,
+      );
+      setTipTxDigest(result.txDigest);
+      setTipAmount('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setTipError(message);
+    } finally {
+      setIsTipping(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-8">
       <div className="sticky top-0 z-40 glass-nav border-b border-[var(--waltube-text-3)]">
@@ -157,6 +213,21 @@ export function UserProfile() {
           <p className="font-accent text-sm text-[var(--waltube-text-1)] mb-2 max-w-xs">
             {profileUser.bio}
           </p>
+
+          {profileUser.suiAddress && (
+            <button
+              onClick={() => {
+                void navigator.clipboard?.writeText(profileUser.suiAddress ?? '');
+              }}
+              className="mb-3 inline-flex items-center gap-2 rounded-[var(--waltube-r-pill)] glass-surface border border-[var(--waltube-indigo)]/40 px-3 py-1.5 font-accent text-xs text-[var(--waltube-text-1)] hover:bg-[var(--waltube-indigo)]/10 transition-colors"
+              title={`Sui address: ${profileUser.suiAddress}`}
+              aria-label="Copy Sui address"
+            >
+              <Wallet className="w-3.5 h-3.5 text-[var(--waltube-indigo)]" />
+              <span className="font-mono">{shortenSuiAddress(profileUser.suiAddress)}</span>
+              <Copy className="w-3 h-3 text-[var(--waltube-text-2)]" />
+            </button>
+          )}
 
           {(profileUser.links.x || profileUser.links.instagram || profileUser.links.youtube || profileUser.links.website) && (
             <div className="flex gap-3 mb-2">
@@ -209,18 +280,86 @@ export function UserProfile() {
         </div>
 
         {activeUser?.uid !== profileUser.uid && (
-          <div className="flex justify-center">
-            <button
-              onClick={handleToggleFollow}
-              disabled={authIsLoading}
-              className={`px-12 py-2.5 rounded-[var(--waltube-r-pill)] font-accent font-medium transition-all ${
-                isFollowing
-                  ? 'glass-surface border border-[var(--waltube-indigo)] text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/10'
-                  : 'bg-[var(--waltube-indigo)] text-white indigo-glow hover:opacity-90'
-              }`}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleToggleFollow}
+                disabled={authIsLoading}
+                className={`px-10 py-2.5 rounded-[var(--waltube-r-pill)] font-accent font-medium transition-all ${
+                  isFollowing
+                    ? 'glass-surface border border-[var(--waltube-indigo)] text-[var(--waltube-indigo)] hover:bg-[var(--waltube-indigo)]/10'
+                    : 'bg-[var(--waltube-indigo)] text-white indigo-glow hover:opacity-90'
+                }`}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+              {profileUser.suiAddress && (
+                <button
+                  onClick={() => {
+                    setShowTipForm((v) => !v);
+                    setTipError(null);
+                    setTipTxDigest(null);
+                  }}
+                  className="px-6 py-2.5 rounded-[var(--waltube-r-pill)] glass-surface border border-[var(--waltube-text-3)]/50 font-accent font-medium text-[var(--waltube-text-1)] hover:bg-[var(--waltube-indigo)]/10 transition-all"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Send className="w-3.5 h-3.5" />
+                    Send Tip
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {showTipForm && profileUser.suiAddress && (
+              <div className="w-full max-w-xs rounded-[var(--waltube-r-lg)] glass-surface border border-[var(--waltube-text-3)]/50 p-4 space-y-3">
+                <p className="font-accent text-xs text-[var(--waltube-text-2)]">
+                  Send SUI directly to @{profileUser.handle}
+                </p>
+                <input
+                  type="number"
+                  value={tipAmount}
+                  onChange={(e) => setTipAmount(e.target.value)}
+                  placeholder="Amount in SUI"
+                  step="0.001"
+                  min="0"
+                  disabled={isTipping}
+                  className="w-full px-3 py-2.5 rounded-[var(--waltube-r-md)] bg-black/40 border border-[var(--waltube-text-3)]/30 text-white placeholder-[var(--waltube-text-2)] font-accent text-sm focus:outline-none focus:border-[var(--waltube-indigo)] transition-colors"
+                />
+                {tipError && (
+                  <div className="rounded-[var(--waltube-r-sm)] bg-red-500/10 border border-red-500/30 px-3 py-2 font-accent text-xs text-red-300 break-words">
+                    {tipError}
+                  </div>
+                )}
+                {tipTxDigest && (
+                  <a
+                    href={`https://testnet.suivision.xyz/txblock/${tipTxDigest}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 rounded-[var(--waltube-r-sm)] bg-[#4cce8a]/10 border border-[#4cce8a]/30 px-3 py-2 font-accent text-xs text-[#9ef5c6] hover:bg-[#4cce8a]/15 transition-colors"
+                  >
+                    <span className="truncate">Sent! Tx: {tipTxDigest.slice(0, 10)}...</span>
+                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                  </a>
+                )}
+                <button
+                  onClick={() => void handleSendTip()}
+                  disabled={isTipping || !tipAmount.trim()}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[var(--waltube-r-md)] bg-[var(--waltube-indigo)] text-white hover:opacity-90 transition-all font-accent text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isTipping ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Send {tipAmount ? `${tipAmount} SUI` : 'Tip'}
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
