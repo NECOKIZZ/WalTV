@@ -1,5 +1,5 @@
 import { EnokiClient } from '@mysten/enoki';
-import { isPendingDigest } from './pending-digests';
+import { isPendingDigest } from './pending-digests.js';
 
 type ApiRequest = {
   method?: string;
@@ -72,8 +72,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   // Only execute digests that were created by our own sponsor endpoint.
-  // This prevents attackers from draining the Enoki budget by replaying
-  // digests from unrelated sponsored transactions.
+  // Best-effort within warm instance; replace with Redis for production.
   if (!isPendingDigest(digest)) {
     res.status(403).json({ error: 'Digest not recognized as originated by this service' });
     return;
