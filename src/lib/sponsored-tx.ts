@@ -92,8 +92,10 @@ export async function sponsorAndExecuteTx(
   const sender = keypair.toSuiAddress();
 
   // 1. Build kind-only bytes (no gas data — Enoki fills that in).
-  //    onlyTransactionKind does not need a client.
+  //    We still pass the client because shared-object references (e.g.
+  //    CLOCK_OBJECT_ID, royalty registry) need version resolution.
   const kindBytes = await tx.build({
+    client: suiClient as never,
     onlyTransactionKind: true,
   });
 
