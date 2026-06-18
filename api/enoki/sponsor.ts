@@ -1,5 +1,4 @@
 import { EnokiClient } from '@mysten/enoki';
-import { trackDigest } from './pending-digests.js';
 
 type ApiRequest = {
   method?: string;
@@ -149,9 +148,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       allowedAddresses,
       allowedMoveCallTargets,
     });
-
-    // Track digest for execute.ts verification (best-effort within warm instance).
-    trackDigest(sponsored.digest);
 
     res.status(200).json(sponsored);
   } catch (err) {

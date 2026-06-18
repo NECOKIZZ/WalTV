@@ -1,5 +1,4 @@
 import { EnokiClient } from '@mysten/enoki';
-import { isPendingDigest } from './pending-digests.js';
 
 type ApiRequest = {
   method?: string;
@@ -71,13 +70,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     return;
   }
 
-  // Only execute digests that were created by our own sponsor endpoint.
-  // Best-effort within warm instance; replace with Redis for production.
-  if (!isPendingDigest(digest)) {
-    res.status(403).json({ error: 'Digest not recognized as originated by this service' });
-    return;
-  }
-
+  // TODO: Add digest verification once a durable store (Redis/Firestore)
+  // is available. In-memory tracking doesn't work across serverless instances.
   try {
     const client = new EnokiClient({ apiKey: privateKey });
 
