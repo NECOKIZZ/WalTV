@@ -66,6 +66,14 @@ export interface SponsorOptions {
   showEffects?: boolean;
   showObjectChanges?: boolean;
   showBalanceChanges?: boolean;
+  /** Anti-abuse: only these Move function targets are allowed (e.g.
+   *  "0xPKG::attribution::record_prompt"). Required in production.
+   */
+  allowedMoveCallTargets?: string[];
+  /** Anti-abuse: only these addresses may appear as recipients.
+   *  Defaults to [sender] if not provided.
+   */
+  allowedAddresses?: string[];
 }
 
 /** Build the transaction kind bytes, ask Enoki to sponsor, get the user's
@@ -84,35 +92,54 @@ export async function sponsorAndExecuteTx(
   const sender = keypair.toSuiAddress();
 
   // 1. Build kind-only bytes (no gas data — Enoki fills that in).
-  // The Sui SDK's `tx.build({ client })` reaches into the client for any
-  // unresolved object refs. The SuiJsonRpcClient injected from dapp-kit
-  // satisfies this contract; the cast keeps our local interfaces narrow.
+  //    onlyTransactionKind does not need a client.
   const kindBytes = await tx.build({
-    // The SuiJsonRpcClient injected via dapp-kit satisfies the build()
-    // contract; the cast keeps our SuiClientLike interface narrow.
-    client: suiClient as never,
     onlyTransactionKind: true,
   });
 
-  // 2. Ask Enoki to wrap with sponsor gas.
-  const sponsored = await enokiFlow.enokiClient.createSponsoredTransaction({
-    network: suiNetwork,
-    transactionKindBytes: toBase64(kindBytes),
-    sender,
-    allowedAddresses: [sender],
-  });
+  const transactionKindBytes = toBase64(kindBytes);
+  const allowedAddresses = options.allowedAddresses ?? [sender];
+  const allowedMoveCallTargets = options.allowedMoveCallTargets ?? [];
+
+  // 2. Production: route through backend API (holds private key).
+  //    Development: call Enoki directly (public key, same as before).
+  let sponsored: { bytes: string; digest: string };
+
+  if (import.meta.env.PROD) {
+    sponsored = await sponsorViaBackend({
+      network: suiNetwork,
+      transactionKindBytes,
+      sender,
+      allowedAddresses,
+      allowedMoveCallTargets,
+    });
+  } else {
+    sponsored = await enokiFlow.enokiClient.createSponsoredTransaction({
+      network: suiNetwork,
+      transactionKindBytes,
+      sender,
+      allowedAddresses,
+      allowedMoveCallTargets,
+    });
+  }
 
   // 3. User signs the wrapped bytes (proves they authorize the call).
   const userSig = await keypair.signTransaction(fromBase64(sponsored.bytes));
 
-  // 4. Hand the user signature back to Enoki for final execution.
-  await enokiFlow.enokiClient.executeSponsoredTransaction({
-    digest: sponsored.digest,
-    signature: userSig.signature,
-  });
+  // 4. Hand the user signature back for final execution.
+  if (import.meta.env.PROD) {
+    await executeViaBackend({
+      digest: sponsored.digest,
+      signature: userSig.signature,
+    });
+  } else {
+    await enokiFlow.enokiClient.executeSponsoredTransaction({
+      digest: sponsored.digest,
+      signature: userSig.signature,
+    });
+  }
 
-  // 5. Wait for finality and fetch the full result the rest of our code
-  //    expects (objectChanges, balanceChanges, etc).
+  // 5. Wait for finality and fetch the full result.
   const result = await suiClient.waitForTransaction({
     digest: sponsored.digest,
     options: {
@@ -128,4 +155,51 @@ export async function sponsorAndExecuteTx(
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Backend API helpers (production only)
+// ---------------------------------------------------------------------------
+
+interface SponsorBackendRequest {
+  network: string;
+  transactionKindBytes: string;
+  sender: string;
+  allowedAddresses: string[];
+  allowedMoveCallTargets: string[];
+}
+
+async function sponsorViaBackend(
+  params: SponsorBackendRequest,
+): Promise<{ bytes: string; digest: string }> {
+  const res = await fetch('/api/enoki/sponsor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Sponsor backend failed (${res.status}): ${body}`);
+  }
+
+  return res.json() as Promise<{ bytes: string; digest: string }>;
+}
+
+interface ExecuteBackendRequest {
+  digest: string;
+  signature: string;
+}
+
+async function executeViaBackend(params: ExecuteBackendRequest): Promise<void> {
+  const res = await fetch('/api/enoki/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Execute backend failed (${res.status}): ${body}`);
+  }
 }

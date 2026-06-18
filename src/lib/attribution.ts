@@ -128,6 +128,7 @@ async function executeAttributionTx(
   tx: Transaction,
   enokiFlow: EnokiFlowLike,
   suiClient: SuiClientLike,
+  allowedMoveCallTargets?: string[],
 ): Promise<OnchainAttributionResult> {
   // Try sponsored path first — Enoki pays the gas. If anything fails (budget
   // exhausted, target not allowlisted, network issue), fall back to user-paid
@@ -139,7 +140,7 @@ async function executeAttributionTx(
       tx,
       enokiFlow as unknown as Parameters<typeof sponsorAndExecuteTx>[1],
       suiClient,
-      { showObjectChanges: true, showEffects: true },
+      { showObjectChanges: true, showEffects: true, allowedMoveCallTargets },
     );
 
     const created = sponsoredResult.objectChanges?.find((change) =>
@@ -188,7 +189,12 @@ export async function recordPromptAttributionOnchain(
   enokiFlow: EnokiFlowLike,
   suiClient: SuiClientLike,
 ) {
-  return executeAttributionTx(buildRecordPromptAttributionTx(input), enokiFlow, suiClient);
+  return executeAttributionTx(
+    buildRecordPromptAttributionTx(input),
+    enokiFlow,
+    suiClient,
+    [`${attributionPackageId}::${ATTRIBUTION_MODULE}::record_prompt`],
+  );
 }
 
 export async function recordForkAttributionOnchain(
@@ -201,5 +207,10 @@ export async function recordForkAttributionOnchain(
   enokiFlow: EnokiFlowLike,
   suiClient: SuiClientLike,
 ) {
-  return executeAttributionTx(buildRecordForkAttributionTx(input), enokiFlow, suiClient);
+  return executeAttributionTx(
+    buildRecordForkAttributionTx(input),
+    enokiFlow,
+    suiClient,
+    [`${attributionPackageId}::${ATTRIBUTION_MODULE}::record_fork`],
+  );
 }

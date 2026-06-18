@@ -140,7 +140,7 @@ async function executeTx(
   tx: Transaction,
   enokiFlow: EnokiFlowLike,
   suiClient: SuiClientLike,
-  options: { sponsored?: boolean } = {},
+  options: { sponsored?: boolean; allowedMoveCallTargets?: string[] } = {},
 ): Promise<{ txDigest: string; objectChanges?: unknown[] | null; balanceChanges?: unknown[] | null }> {
   // Sponsored path — Enoki pays gas. Used for fork-time royalty config
   // creation so creators can fork without owning SUI. Falls back to
@@ -151,7 +151,7 @@ async function executeTx(
         tx,
         enokiFlow as unknown as Parameters<typeof sponsorAndExecuteTx>[1],
         suiClient,
-        { showEffects: true, showObjectChanges: true, showBalanceChanges: true },
+        { showEffects: true, showObjectChanges: true, showBalanceChanges: true, allowedMoveCallTargets: options.allowedMoveCallTargets },
       );
       console.log('[royalties] sponsored tx ok:', sponsoredResult.digest);
       return {
@@ -201,7 +201,7 @@ export async function createRoyaltyConfigOnchain(
     buildCreateRoyaltyConfigTx(input),
     enokiFlow,
     suiClient,
-    { sponsored: true },
+    { sponsored: true, allowedMoveCallTargets: [`${royaltiesPackageId}::royalties::create_royalty_config`] },
   );
 
   const created = objectChanges?.find((change) => isCreatedRoyaltyConfig(change));
