@@ -223,6 +223,20 @@ service cloud.firestore {
       allow create, update: if isPublicUserProfile(userId);
     }
 
+    // Records that a viewer has paid to unlock a premium workflow. Keyed by the
+    // paying user's Sui address (the {userId} path segment) and the workflow id.
+    // Note: Firestore rules do NOT cascade from /users/{userId} to its
+    // subcollections, so this explicit match is required.
+    match /users/{userId}/unlocked_workflows/{workflowId} {
+      allow read: if true;
+      allow create: if isAppUserId(userId)
+        && request.resource.data.workflowId is string
+        && request.resource.data.creatorUid is string
+        && request.resource.data.amountMist is string
+        && request.resource.data.txDigest is string;
+      allow update, delete: if false;
+    }
+
     match /usersPrivate/{userId} {
       allow read, create, update: if isFirebaseOwner(userId);
     }

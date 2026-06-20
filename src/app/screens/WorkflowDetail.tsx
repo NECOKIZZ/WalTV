@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
   ArrowLeft,
@@ -7,14 +7,22 @@ import {
   Copy,
   Heart,
   Image as ImageIcon,
+  Loader2,
+  Lock,
   Play,
+  Unlock,
   Wand2,
 } from 'lucide-react';
-import { workflowsApi } from '../../lib/backend';
+import { workflowsApi, workflowUnlocksApi } from '../../lib/backend';
 import { useAuth } from '../../lib/auth-context';
 import { useBackendQuery } from '../../lib/useBackendQuery';
 import { WorkflowGenerationType } from '../../lib/types';
 import { getAIModelConfig } from '../../lib/aiModelLogos';
+import { createSealClient, decryptWorkflowSteps, buildPayAndUnlockTx, isSealPremiumEnabled } from '../../lib/seal';
+import { walrusBlobUrl } from '../../lib/walrus';
+import { formatMistAsSui } from '../../lib/sui-payments';
+import { useSuiClient } from '@mysten/dapp-kit';
+import { useEnokiFlow } from '@mysten/enoki/react';
 
 const generationTypeLabels: Record<WorkflowGenerationType, string> = {
   prompt_to_video: 'Prompt to video',
@@ -52,6 +60,8 @@ export function WorkflowDetail() {
   const navigate = useNavigate();
   const { workflowId } = useParams();
   const { user: activeUser, isLoading: authIsLoading } = useAuth();
+  const suiClient = useSuiClient();
+  const enokiFlow = useEnokiFlow();
 
   const { data: workflowData, isLoading } = useBackendQuery(
     () => (workflowId ? workflowsApi.getWorkflowById(workflowId) : Promise.resolve(null)),
@@ -75,6 +85,23 @@ export function WorkflowDetail() {
   const [copiedStepId, setCopiedStepId] = useState<string | null>(null);
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
 
+  // Premium workflow state
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isCheckingUnlock, setIsCheckingUnlock] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+  const [decryptedSteps, setDecryptedSteps] = useState<typeof workflow.steps | null>(null);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  // Guards the auto-decrypt effect so it only fires once per workflow.
+  const autoDecryptAttemptedRef = useRef(false);
+
+  const premiumFeatureEnabled = isSealPremiumEnabled();
+
+  const isPremium = premiumFeatureEnabled && (workflowData?.isPremium ?? false);
+  const isCreator = !!workflowData && workflowData.authorUid === activeUser?.uid;
+  const hasAccess = !isPremium || isCreator || isUnlocked || decryptedSteps !== null;
+  const displaySteps = decryptedSteps ?? workflowData?.steps ?? [];
+
   useEffect(() => {
     setLikesCount(workflowData?.likes ?? 0);
   }, [workflowData]);
@@ -86,6 +113,86 @@ export function WorkflowDetail() {
     setLiked(likedWorkflowIds.includes(workflowId));
     setSaved(savedWorkflowIds.includes(workflowId));
   }, [likedWorkflowIds, savedWorkflowIds, workflowId]);
+
+  useEffect(() => {
+    if (!premiumFeatureEnabled || !workflowData?.isPremium || !activeUser || !workflowId) {
+      return;
+    }
+
+    if (workflowData.authorUid === activeUser.uid) {
+      setIsUnlocked(true);
+      return;
+    }
+
+    setIsCheckingUnlock(true);
+    workflowUnlocksApi
+      .isUnlocked(activeUser.uid, workflowId)
+      .then((unlocked) => {
+        setIsUnlocked(unlocked);
+      })
+      .finally(() => {
+        setIsCheckingUnlock(false);
+      });
+  }, [workflowData, activeUser, workflowId, premiumFeatureEnabled]);
+
+  // Fetch ciphertext from Walrus and decrypt with Seal. Shared by the
+  // post-payment path and the auto-decrypt effect (creator / unlocked viewer).
+  const runDecrypt = useCallback(async (): Promise<boolean> => {
+    if (!workflowData?.sealEncryptedBlobId || !workflowData.sealAccessPolicyId) {
+      setUnlockError('Premium workflow is not fully configured yet.');
+      return false;
+    }
+
+    setIsDecrypting(true);
+    try {
+      const keypair = await enokiFlow.getKeypair({ network: 'testnet' });
+      const sealClient = createSealClient(suiClient);
+
+      const response = await fetch(walrusBlobUrl(workflowData.sealEncryptedBlobId));
+      if (!response.ok) {
+        throw new Error(`Could not fetch encrypted blob (${response.status}).`);
+      }
+      const encryptedBlob = await response.arrayBuffer();
+
+      const decrypted = await decryptWorkflowSteps(
+        new Uint8Array(encryptedBlob),
+        workflowData.sealAccessPolicyId,
+        sealClient,
+        keypair,
+        suiClient,
+      );
+      setDecryptedSteps(decrypted);
+      setUnlockError(null);
+      return true;
+    } catch (decryptError) {
+      console.error('[premium] Decryption failed:', decryptError);
+      setUnlockError(
+        decryptError instanceof Error
+          ? `Decryption failed: ${decryptError.message}`
+          : 'Decryption failed.',
+      );
+      return false;
+    } finally {
+      setIsDecrypting(false);
+    }
+  }, [workflowData, enokiFlow, suiClient]);
+
+  // Auto-decrypt once for users who already have access (creator or a viewer
+  // who paid in a previous session). Premium steps are never stored in
+  // Firestore, so without this they'd see an empty thread after a refresh.
+  useEffect(() => {
+    if (!isPremium || !workflowData?.sealEncryptedBlobId) {
+      return;
+    }
+    if (!isCreator && !isUnlocked) {
+      return;
+    }
+    if (decryptedSteps !== null || isDecrypting || autoDecryptAttemptedRef.current) {
+      return;
+    }
+    autoDecryptAttemptedRef.current = true;
+    void runDecrypt();
+  }, [isPremium, isCreator, isUnlocked, workflowData, decryptedSteps, isDecrypting, runDecrypt]);
 
   if (isLoading) {
     return (
@@ -162,6 +269,115 @@ export function WorkflowDetail() {
     }
   };
 
+  const handleUnlock = async () => {
+    if (!activeUser || !workflowData || !workflowData.isPremium) {
+      return;
+    }
+    if (!workflowData.sealAccessPolicyId || !workflowData.unlockPriceMist || !workflowData.sealPackageId) {
+      setUnlockError('Premium workflow is not fully configured yet.');
+      return;
+    }
+
+    setIsUnlocking(true);
+    setUnlockError(null);
+
+    const policyId = workflowData.sealAccessPolicyId;
+
+    // Read the on-chain policy and tell us whether `address` already has access
+    // (is the creator, or already in unlocked_users). Used to avoid paying
+    // twice when a prior payment succeeded but the off-chain record didn't.
+    const isUnlockedOnChain = async (address: string): Promise<boolean> => {
+      try {
+        const object = await suiClient.getObject({ id: policyId, options: { showContent: true } });
+        const content = object.data?.content;
+        if (!content || content.dataType !== 'moveObject') {
+          return false;
+        }
+        const fields = content.fields as {
+          creator?: string;
+          unlocked_users?: { fields?: { contents?: unknown[] } };
+        };
+        const target = address.toLowerCase();
+        if (typeof fields.creator === 'string' && fields.creator.toLowerCase() === target) {
+          return true;
+        }
+        const contents = fields.unlocked_users?.fields?.contents ?? [];
+        return contents.some((entry) => String(entry).toLowerCase() === target);
+      } catch (lookupError) {
+        console.warn('[premium] on-chain unlock check failed:', lookupError);
+        return false;
+      }
+    };
+
+    try {
+      const keypair = await enokiFlow.getKeypair({ network: 'testnet' });
+      const myAddress = keypair.toSuiAddress();
+
+      let txDigest = 'onchain';
+
+      if (await isUnlockedOnChain(myAddress)) {
+        // Already paid on a previous attempt — don't pay again.
+        console.info('[premium] already unlocked on-chain, skipping payment');
+      } else {
+        const tx = buildPayAndUnlockTx(
+          policyId,
+          BigInt(workflowData.unlockPriceMist),
+          workflowData.sealPackageId,
+        );
+
+        // Let the client set sender / gas payment / budget from the signer.
+        // (Manually building with tx.build() requires an explicit setSender,
+        // otherwise it throws "Missing transaction sender".)
+        const executeResult = await suiClient.signAndExecuteTransaction({
+          transaction: tx,
+          signer: keypair,
+          options: { showEffects: true },
+        });
+
+        if (executeResult.effects?.status?.status !== 'success') {
+          throw new Error(
+            executeResult.effects?.status?.error ?? 'Payment transaction did not succeed.',
+          );
+        }
+        txDigest = executeResult.digest;
+      }
+
+      await workflowUnlocksApi.recordUnlock(activeUser.uid, workflowData.id, {
+        creatorUid: workflowData.authorUid,
+        amountMist: workflowData.unlockPriceMist,
+        txDigest,
+        paidAt: new Date(),
+      });
+
+      setIsUnlocked(true);
+      await runDecrypt();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Safety net: if pay_and_unlock aborted with E_ALREADY_UNLOCKED (code 1),
+      // the user already has access — proceed to decrypt instead of failing.
+      if (message.includes('abort code: 1') || message.includes('E_ALREADY_UNLOCKED')) {
+        console.info('[premium] pay aborted as already-unlocked, proceeding to decrypt');
+        setIsUnlocked(true);
+        try {
+          await workflowUnlocksApi.recordUnlock(activeUser.uid, workflowData.id, {
+            creatorUid: workflowData.authorUid,
+            amountMist: workflowData.unlockPriceMist,
+            txDigest: 'onchain',
+            paidAt: new Date(),
+          });
+        } catch (recordError) {
+          console.warn('[premium] could not record existing unlock:', recordError);
+        }
+        await runDecrypt();
+      } else {
+        console.error('[premium] Unlock failed:', error);
+        setUnlockError(message);
+      }
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-10">
       <div className="sticky top-0 z-40 border-b border-[var(--waltube-text-3)] bg-[rgba(7,10,23,0.88)] backdrop-blur-xl">
@@ -217,6 +433,17 @@ export function WorkflowDetail() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-black/5" />
             </div>
 
+            {isPremium && (
+              <div className="mb-3 flex items-center gap-2 rounded-[var(--waltube-r-md)] border border-[#f5a623]/25 bg-[#f5a623]/8 px-3 py-2">
+                <Lock className="h-3.5 w-3.5 text-[#ffd27c]" />
+                <span className="font-accent text-xs text-[#ffe4b0]">
+                  Premium &middot; {workflow.unlockPriceMist
+                    ? `${formatMistAsSui(BigInt(workflow.unlockPriceMist))} SUI to unlock`
+                    : 'Payment required'}
+                </span>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => void handleToggleSave()}
@@ -245,7 +472,79 @@ export function WorkflowDetail() {
             </div>
           </section>
 
-          {workflow.steps.map((step) => {
+          {isPremium && !isCreator && !isUnlocked && decryptedSteps === null && (
+            <section className="relative mb-6 rounded-[var(--waltube-r-xl)] border border-[#f5a623]/30 bg-[linear-gradient(180deg,rgba(245,166,35,0.12),rgba(245,166,35,0.04))] p-6 text-center">
+              <div className="absolute left-[-31px] top-10 h-4 w-4 rounded-full border-4 border-[#f5a623] bg-[var(--waltube-bg)] shadow-[0_0_18px_rgba(245,166,35,0.45)]" />
+              <Lock className="mx-auto mb-3 h-8 w-8 text-[#ffd27c]" />
+              <h2 className="mb-2 font-primary text-lg font-semibold text-[var(--waltube-text-1)]">
+                Premium Workflow
+              </h2>
+              <p className="mb-4 font-accent text-sm text-[var(--waltube-text-2)]">
+                Unlock to reveal the step-by-step prompts and media.
+              </p>
+              <button
+                onClick={() => {
+                  if (!activeUser) {
+                    navigate('/auth');
+                    return;
+                  }
+                  void handleUnlock();
+                }}
+                disabled={isUnlocking || isCheckingUnlock || isDecrypting}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--waltube-r-pill)] bg-[#f5a623] px-6 py-3 font-accent text-sm font-medium text-[#1b1205] shadow-[0_0_24px_rgba(245,166,35,0.28)] transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {isUnlocking ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing payment...
+                  </>
+                ) : isDecrypting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Decrypting...
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="h-4 w-4" />
+                    Unlock for{' '}
+                    {workflow.unlockPriceMist
+                      ? `${formatMistAsSui(BigInt(workflow.unlockPriceMist))} SUI`
+                      : 'SUI'}
+                  </>
+                )}
+              </button>
+              {unlockError && (
+                <p className="mt-3 font-accent text-xs text-red-300">{unlockError}</p>
+              )}
+            </section>
+          )}
+
+          {isPremium && (isCreator || isUnlocked) && decryptedSteps === null && (
+            <section className="relative mb-6 rounded-[var(--waltube-r-xl)] border border-[#f5a623]/30 bg-[linear-gradient(180deg,rgba(245,166,35,0.12),rgba(245,166,35,0.04))] p-6 text-center">
+              <div className="absolute left-[-31px] top-10 h-4 w-4 rounded-full border-4 border-[#f5a623] bg-[var(--waltube-bg)] shadow-[0_0_18px_rgba(245,166,35,0.45)]" />
+              {isDecrypting ? (
+                <div className="flex items-center justify-center gap-2 font-accent text-sm text-[var(--waltube-text-2)]">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#ffd27c]" />
+                  Decrypting premium content...
+                </div>
+              ) : (
+                <>
+                  <p className="mb-3 font-accent text-sm text-[var(--waltube-text-2)]">
+                    {unlockError ?? 'You have access to this premium workflow.'}
+                  </p>
+                  <button
+                    onClick={() => void runDecrypt()}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--waltube-r-pill)] bg-[#f5a623] px-6 py-3 font-accent text-sm font-medium text-[#1b1205] shadow-[0_0_24px_rgba(245,166,35,0.28)] transition-opacity hover:opacity-90"
+                  >
+                    <Unlock className="h-4 w-4" />
+                    Reveal steps
+                  </button>
+                </>
+              )}
+            </section>
+          )}
+
+          {displaySteps.map((step) => {
             const stepModel = getAIModelConfig(step.model || workflow.tool);
 
             return (
@@ -436,22 +735,24 @@ export function WorkflowDetail() {
             );
           })}
 
-          <button
-            onClick={() => {
-              const promptLines = workflow.steps
-                .filter((step) => step.promptText)
-                .map((step, index) => `${index + 1}. ${step.promptText}`)
-                .join('\n\n');
-              if (!promptLines) {
-                return;
-              }
-              void copyText(promptLines);
-            }}
-            className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-[var(--waltube-r-pill)] border border-[#f5a623]/30 bg-[#f5a623]/10 px-5 py-3 font-accent text-sm font-medium text-[#ffe4b0] transition-colors hover:bg-[#f5a623]/18"
-          >
-            <Copy className="h-4 w-4" />
-            <span>Copy all prompts</span>
-          </button>
+          {hasAccess && displaySteps.length > 0 && (
+            <button
+              onClick={() => {
+                const promptLines = displaySteps
+                  .filter((step) => step.promptText)
+                  .map((step, index) => `${index + 1}. ${step.promptText}`)
+                  .join('\n\n');
+                if (!promptLines) {
+                  return;
+                }
+                void copyText(promptLines);
+              }}
+              className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-[var(--waltube-r-pill)] border border-[#f5a623]/30 bg-[#f5a623]/10 px-5 py-3 font-accent text-sm font-medium text-[#ffe4b0] transition-colors hover:bg-[#f5a623]/18"
+            >
+              <Copy className="h-4 w-4" />
+              <span>Copy all prompts</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

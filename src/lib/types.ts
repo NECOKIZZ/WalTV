@@ -113,6 +113,13 @@ export interface Workflow {
   mediaAspectRatio: PromptAspectRatio;
   createdAt: Date;
   steps: WorkflowStep[];
+
+  // Premium Workflow fields (Seal-encrypted content)
+  isPremium?: boolean;
+  unlockPriceMist?: string;         // e.g. "500000000" for 0.5 SUI
+  sealEncryptedBlobId?: string;    // Walrus blob ID of encrypted steps[]
+  sealAccessPolicyId?: string;      // Sui object ID of WorkflowAccessPolicy
+  sealPackageId?: string;          // Deployed Move package ID for seal_approve
 }
 
 export interface WorkflowStepCreateInput {
@@ -140,6 +147,15 @@ export interface WorkflowCreateInput {
   tags: string[];
   mediaAspectRatio?: PromptAspectRatio;
   steps: WorkflowStepCreateInput[];
+
+  // Premium Workflow fields
+  isPremium?: boolean;
+  unlockPriceMist?: string;
+  sealEncryptedBlobId?: string;
+  sealAccessPolicyId?: string;
+  sealPackageId?: string;
+  /** Optional pre-generated ID. If omitted, Firestore auto-generates one. */
+  id?: string;
 }
 
 export type NotificationType =
@@ -255,5 +271,13 @@ export const availableMoodLabels = [
   'Minimal',
   'Energetic',
 ] as const;
+
+export interface WorkflowUnlockRecord {
+  workflowId: string;
+  creatorUid: string;
+  amountMist: string;
+  txDigest: string;
+  paidAt: Date;
+}
 
 export const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'] as const;

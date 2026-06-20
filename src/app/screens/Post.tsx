@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Sparkles, Upload, X } from 'lucide-react';
+import { Loader2, Lock, Sparkles, Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useSuiClient } from '@mysten/dapp-kit';
 import { useEnokiFlow } from '@mysten/enoki/react';
@@ -20,6 +20,8 @@ import type {
   WorkflowGenerationType,
   WorkflowStepCreateInput,
 } from '../../lib/types';
+import { createSealClient, encryptWorkflowSteps, buildCreateAccessPolicyTx, getSealPackageId, isSealPremiumEnabled } from '../../lib/seal';
+import { suiNetwork } from '../../lib/sui';
 
 type PostMode = 'prompt' | 'workflow';
 
@@ -110,6 +112,9 @@ export function Post() {
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowDraftStep[]>([
     createWorkflowStep(0),
   ]);
+  const [isPremium, setIsPremium] = useState(false);
+  const premiumFeatureEnabled = isSealPremiumEnabled();
+  const [unlockPriceSui, setUnlockPriceSui] = useState('0.5');
 
   const { data: availableModels } = useBackendQuery(() => metaApi.getAvailableModels(), [], []);
   const { data: availableStyleTags } = useBackendQuery(() => metaApi.getAvailableStyleTags(), [], []);
@@ -430,7 +435,62 @@ export function Post() {
     const selectedModels = Array.from(new Set(steps.map((step) => step.model)));
     const workflowToolLabel = selectedModels.length === 1 ? selectedModels[0] : 'Mixed';
 
+    const workflowId = crypto.randomUUID();
+
+    let sealEncryptedBlobId: string | undefined;
+    let sealAccessPolicyId: string | undefined;
+    let sealPackageId: string | undefined;
+
+    if (premiumFeatureEnabled && isPremium) {
+      // Order matters: the access policy must be created FIRST, because its
+      // on-chain object id is the Seal IBE identity used to encrypt. If any
+      // step here throws we surface it (rather than silently posting a broken
+      // premium workflow), so the creator can retry.
+      const packageId = getSealPackageId();
+      const priceMist = BigInt(Math.round(Number(unlockPriceSui) * 1_000_000_000));
+
+      // 1. Create the shared access policy and capture its object id.
+      const accessPolicyTx = buildCreateAccessPolicyTx(priceMist, packageId);
+      const keypair = await enokiFlow.getKeypair({ network: suiNetwork });
+      const policyResult = await suiClient.signAndExecuteTransaction({
+        transaction: accessPolicyTx,
+        signer: keypair,
+        options: { showEffects: true, showObjectChanges: true },
+      });
+
+      const createdPolicyId =
+        policyResult.objectChanges?.find(
+          (change): change is Extract<typeof change, { type: 'created' }> =>
+            change.type === 'created' &&
+            typeof change.objectType === 'string' &&
+            change.objectType.includes('::premium::WorkflowAccessPolicy'),
+        )?.objectId ??
+        policyResult.effects?.created?.[0]?.reference?.objectId;
+
+      if (!createdPolicyId) {
+        throw new Error('Premium setup failed: could not read the access policy object id from chain.');
+      }
+      sealAccessPolicyId = createdPolicyId;
+      sealPackageId = packageId;
+
+      // 2. Encrypt the steps under the policy object id (the IBE identity).
+      const sealClient = createSealClient(suiClient);
+      const { encryptedObject: encObj } = await encryptWorkflowSteps(
+        steps,
+        createdPolicyId,
+        sealClient,
+      );
+
+      // 3. Store the ciphertext in Walrus.
+      const encryptedBlob = await uploadsApi.uploadPromptMedia(
+        new File([new Uint8Array(encObj)], 'workflow.enc', { type: 'application/octet-stream' }),
+        activeUser.uid,
+      );
+      sealEncryptedBlobId = encryptedBlob.blobId;
+    }
+
     const created = await workflowsApi.createWorkflow({
+      id: workflowId,
       authorUid: activeUser.uid,
       title: workflowTitle.trim(),
       tool: workflowToolLabel,
@@ -439,7 +499,14 @@ export function Post() {
       coverThumbnailUrl: coverThumbnailUpload.downloadUrl,
       tags: workflowTags,
       mediaAspectRatio: coverDims.height > coverDims.width ? 'portrait' : 'landscape',
-      steps,
+      steps: (premiumFeatureEnabled && isPremium) ? [] : steps,
+      isPremium: premiumFeatureEnabled && isPremium,
+      unlockPriceMist: (premiumFeatureEnabled && isPremium)
+        ? String(BigInt(Math.round(Number(unlockPriceSui) * 1_000_000_000)))
+        : undefined,
+      sealEncryptedBlobId,
+      sealAccessPolicyId,
+      sealPackageId,
     });
 
     navigate(`/workflow/${created.id}`);
@@ -794,6 +861,54 @@ export function Post() {
                 Choose model per step below.
               </p>
             </div>
+
+            {premiumFeatureEnabled && (
+              <div className="rounded-[var(--waltube-r-lg)] border border-[#f5a623]/20 bg-black/12 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-[#ffd27c]" />
+                    <span className="font-accent text-sm font-medium text-[var(--waltube-text-1)]">
+                      Premium Workflow
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isPremium}
+                    aria-label="Toggle premium workflow"
+                    onClick={() => setIsPremium((prev) => !prev)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                      isPremium ? 'bg-[#f5a623]' : 'bg-[var(--waltube-text-3)]'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        isPremium ? 'translate-x-[22px]' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {isPremium && (
+                  <div>
+                    <label className="font-accent text-xs text-[var(--waltube-text-2)] mb-1 block">
+                      Unlock Price (SUI)
+                    </label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.1"
+                      value={unlockPriceSui}
+                      onChange={(event) => setUnlockPriceSui(event.target.value)}
+                      className="w-full rounded-[var(--waltube-r-md)] border border-[#f5a623]/20 bg-black/15 px-3 py-2 font-accent text-sm text-[var(--waltube-text-1)] outline-none transition-all focus:border-[#f5a623]"
+                    />
+                    <p className="mt-1 font-accent text-xs text-[var(--waltube-text-2)]">
+                      Viewers must pay this amount to unlock the step-by-step prompts.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4">
               {workflowSteps.map((step, index) => {

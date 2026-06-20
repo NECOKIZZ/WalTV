@@ -29,6 +29,7 @@ import {
   User,
   Workflow,
   WorkflowCreateInput,
+  WorkflowUnlockRecord,
 } from './types';
 import { mockCollections, mockNotifications, mockPrompts, mockUsers, mockWorkflows } from './mockData';
 import {
@@ -58,6 +59,8 @@ const COLLECTIONS = {
   userFollows: 'userFollows',
   notifications: 'notifications',
   collections: 'collections',
+  // Subcollection under users/{uid}/unlocked_workflows/{workflowId}
+  unlockedWorkflows: 'unlocked_workflows',
 } as const;
 
 const QUERY_LIMITS = {
@@ -288,6 +291,12 @@ function deserializeWorkflow(id: string, data: Record<string, unknown>): Workflo
           };
         })
       : [],
+    // Premium fields
+    isPremium: Boolean(data.isPremium),
+    unlockPriceMist: data.unlockPriceMist ? String(data.unlockPriceMist) : undefined,
+    sealEncryptedBlobId: data.sealEncryptedBlobId ? String(data.sealEncryptedBlobId) : undefined,
+    sealAccessPolicyId: data.sealAccessPolicyId ? String(data.sealAccessPolicyId) : undefined,
+    sealPackageId: data.sealPackageId ? String(data.sealPackageId) : undefined,
   };
 }
 
@@ -1476,8 +1485,9 @@ export const workflowsApi = {
       throw new Error(`Could not find author "${input.authorUid}" for workflow creation.`);
     }
 
+    const workflowId = input.id ?? crypto.randomUUID();
     const workflow: Workflow = {
-      id: crypto.randomUUID(),
+      id: workflowId,
       authorUid: author.uid,
       authorHandle: author.handle,
       authorAvatar: author.avatarUrl,
@@ -1492,7 +1502,7 @@ export const workflowsApi = {
       saves: 0,
       mediaAspectRatio: input.mediaAspectRatio ?? 'landscape',
       createdAt: new Date(),
-      steps: input.steps.map((step, index) => ({
+      steps: input.isPremium ? [] : input.steps.map((step, index) => ({
         id: `step-${index + 1}`,
         stepNumber: index + 1,
         label: step.label.trim() || `Step ${index + 1}`,
@@ -1508,6 +1518,12 @@ export const workflowsApi = {
         resultThumbnailUrl: step.resultThumbnailUrl,
         resultContentType: step.resultContentType,
       })),
+      // Premium fields
+      isPremium: input.isPremium ?? false,
+      unlockPriceMist: input.unlockPriceMist,
+      sealEncryptedBlobId: input.sealEncryptedBlobId,
+      sealAccessPolicyId: input.sealAccessPolicyId,
+      sealPackageId: input.sealPackageId,
     };
 
     if (!firebaseEnabled) {
@@ -1517,14 +1533,11 @@ export const workflowsApi = {
     const firestore = requireDb();
     const workflowDocument = { ...workflow } as Omit<Workflow, 'id'> & { id?: string };
     delete workflowDocument.id;
-    const created = await addDoc(collection(firestore, COLLECTIONS.workflows), {
+    await setDoc(doc(firestore, COLLECTIONS.workflows, workflow.id), {
       ...stripUndefinedFields(workflowDocument),
     });
 
-    return {
-      ...workflow,
-      id: created.id,
-    };
+    return workflow;
   },
 
   async getLikedWorkflowIds(userId: string): Promise<string[]> {
@@ -1691,6 +1704,24 @@ export const workflowsApi = {
     });
   },
 
+  async getWorkflowsByAuthorUid(authorUid: string): Promise<Workflow[]> {
+    if (!firebaseEnabled) {
+      return mockWorkflows
+        .filter((entry) => entry.authorUid === authorUid)
+        .map(cloneWorkflow);
+    }
+
+    const firestore = requireDb();
+    const snapshot = await getDocs(
+      query(
+        collection(firestore, COLLECTIONS.workflows),
+        where('authorUid', '==', authorUid),
+        orderBy('createdAt', 'desc'),
+      ),
+    );
+    return snapshot.docs.map((entry) => deserializeWorkflow(entry.id, entry.data() as Record<string, unknown>));
+  },
+
   async deleteWorkflow(workflowId: string, userId: string): Promise<void> {
     if (!userId) {
       throw new Error('Log in to delete workflows.');
@@ -1753,6 +1784,77 @@ export const workflowsApi = {
       ...saveSnapshots.docs.map((saveDoc) => deleteDoc(saveDoc.ref)),
     ]);
     await deleteDoc(workflowRef);
+  },
+};
+
+// Firestore subcollection: users/{uid}/unlocked_workflows/{workflowId}
+// O(1) reads per user, no composite key collision risk, scales cleanly.
+export const workflowUnlocksApi = {
+  async isUnlocked(userId: string, workflowId: string): Promise<boolean> {
+    if (!userId || !workflowId) {
+      return false;
+    }
+
+    if (!firebaseEnabled) {
+      return false;
+    }
+
+    const firestore = requireDb();
+    const docRef = doc(
+      firestore,
+      COLLECTIONS.users,
+      userId,
+      COLLECTIONS.unlockedWorkflows,
+      workflowId,
+    );
+    const snapshot = await getDoc(docRef);
+    return snapshot.exists();
+  },
+
+  async recordUnlock(
+    userId: string,
+    workflowId: string,
+    record: Omit<WorkflowUnlockRecord, 'workflowId'>,
+  ): Promise<void> {
+    if (!userId || !workflowId) {
+      throw new Error('Missing userId or workflowId.');
+    }
+
+    if (!firebaseEnabled) {
+      return;
+    }
+
+    const firestore = requireDb();
+    const docRef = doc(
+      firestore,
+      COLLECTIONS.users,
+      userId,
+      COLLECTIONS.unlockedWorkflows,
+      workflowId,
+    );
+    await setDoc(docRef, {
+      workflowId,
+      ...stripUndefinedFields(record),
+    });
+  },
+
+  async getUnlockedWorkflowIds(userId: string): Promise<string[]> {
+    if (!userId) {
+      return [];
+    }
+
+    if (!firebaseEnabled) {
+      return [];
+    }
+
+    const firestore = requireDb();
+    const snapshot = await getDocs(
+      collection(firestore, COLLECTIONS.users, userId, COLLECTIONS.unlockedWorkflows),
+    );
+
+    return snapshot.docs
+      .map((entry) => String(entry.data().workflowId ?? ''))
+      .filter(Boolean);
   },
 };
 
