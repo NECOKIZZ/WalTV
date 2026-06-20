@@ -149,6 +149,8 @@ Web2 creators get the UX they already know. Web3 creators get native wallet inte
 
 This is the difference between a recipe and a photo of a finished meal. AI video creation is a multi-tool craft. Workflow Cards make that craft teachable, reproducible, and attributable. The creator who documents their pipeline owns that pipeline — onchain, permanently, with every fork credited back.
 
+Workflow Cards can also be priced. A creator sets a SUI price on an advanced card, and the steps stay encrypted and locked until that price is paid — see 3.9 for how that's enforced without anyone, including WalTube, having to be trusted.
+
 ---
 
 ### 3.7 The Fork System
@@ -166,6 +168,18 @@ Combined with smart royalties, the fork system turns creative influence into mea
 The base building block of WalTube. Every Prompt Card contains the video output, the exact prompt text, the AI model used, style tags, mood label, difficulty level, and camera notes. One-tap copy. One-tap fork. One-tap tip.
 
 This is the format that doesn't exist anywhere else: a structured, attributable, monetizable post specifically designed for AI-generated content. Not a tweet. Not a YouTube video. Not a GitHub gist. Something built for this medium from the ground up.
+
+---
+
+### 3.9 Premium Workflow Cards — Seal-Encrypted Paywalls
+
+**What traditional platforms do:** A Patreon-style paywall is a database flag. If you've paid, a server checks a row in a table and serves you the content. That check lives entirely inside the platform's backend — meaning the platform itself, or anyone with admin access to it, can always see (or leak, or override) what's supposed to be locked. The "wall" is enforced by trust, not by cryptography.
+
+**What WalTube does:** Creators can mark a Workflow Card as Premium and set their own SUI price. The card's step content — prompts, parameters, technique notes — is encrypted before it's published to Walrus, using Seal, Sui's decentralized threshold identity-based encryption (IBE) protocol. The decryption key for that content is never held by WalTube. Instead, Seal's independent key servers will only release the key shares needed to decrypt once they can verify, onchain, that the buyer paid the creator's price. Pay the price → the card decrypts in the buyer's browser. Don't pay → the content is cryptographically inaccessible, full stop — not gated by a server check WalTube could quietly bypass.
+
+This is what turns Workflow Cards from a teaching format into a real product: a creator's signature pipeline — the exact sequence that produces their style — becomes something they can sell directly, enforced by encryption rather than by asking buyers (or WalTube) to play fair.
+
+Technical: Encryption/decryption handled client-side via `@mysten/seal`. Payment is verified onchain before Seal's key servers will cooperate to reconstruct a decryption key for that specific card.
 
 ---
 
@@ -193,15 +207,19 @@ Every Web3 social app before WalTube lost mainstream creators at the wallet setu
 
 The onboarding flow is 3 steps: pick a handle, select your AI models, follow top creators.
 
+Enoki also powers sponsored transactions — scoped to royalty payouts and attribution writes. Creators and forkers never pay gas for those onchain records; WalTube covers it on the backend.
+
 ### 4.3 Backend / Data Layer
 
 | Service | Purpose |
 |---------|---------|
 | **Firebase Firestore** | Social graph (users, follows, likes, saves, copies, notifications, collections) |
-| **Walrus** | Decentralized media storage (videos, thumbnails, avatars, workflow media) |
-| **Sui Blockchain** | Onchain attribution records (Move contracts), SUI tipping, zkLogin identity |
+| **Walrus** | Decentralized media storage (videos, thumbnails, avatars, workflow media, Seal-encrypted premium content) |
+| **Sui Blockchain** | Onchain attribution records (Move contracts), SUI tipping, zkLogin identity, premium card payment records |
+| **Seal** | Threshold IBE encryption for Premium Workflow Card content — decryption gated by onchain payment verification |
+| **Enoki** | zkLogin wallet derivation + sponsored transaction backend (gasless royalty payouts and attribution writes) |
 
-Firebase handles high-frequency, low-stakes social actions (likes, saves, copies) with sub-second latency. Sui handles high-value, irreversible actions (forks with attribution, paid likes, storage blob ownership).
+Firebase handles high-frequency, low-stakes social actions (likes, saves, copies) with sub-second latency. Sui handles high-value, irreversible actions (forks with attribution, paid likes, storage blob ownership, premium content payment gating).
 
 ### 4.4 Smart Contracts
 
@@ -210,6 +228,7 @@ Firebase handles high-frequency, low-stakes social actions (likes, saves, copies
 | **`cuerate_attribution`** | Records `AttributionRecord` objects onchain for every prompt and fork. Tracks original author, fork depth, parent record, and timestamp. |
 | **`waltube_royalties`** | Creates per-prompt `RoyaltyConfig` objects and atomically splits SUI payments across multiple recipients. `receive_payment` distributes to all configured recipients in a single transaction. |
 | **Paid Like Tipping** | Wallet-to-wallet SUI transfers on every like (direct transfer fallback when no royalty config exists). |
+| **Premium Card Access Control** | Records onchain payment for a priced Workflow Card. This record is the access policy Seal's key servers check before cooperating to release decryption key shares for that card's content. |
 
 ### 4.5 Storage Architecture
 
@@ -268,6 +287,7 @@ Content is immutable. The blob ID in Firestore is the single source of truth. If
 | Remix earnings | Zero | Zero | Smart royalties — automatic, multi-generational |
 | Onboarding | Email/phone | Email/wallet | zkLogin — Google sign-in, 45 seconds |
 | Content format | Generic video/image posts | Model images, static prompts | Video-first Prompt Cards + Workflow Cards |
+| Premium content gating | Centralized paywall — server decides access | Centralized paywall / escrow | Seal-encrypted, onchain payment-gated — not even WalTube can bypass it |
 | Web3 native | No | Partial | Yes — Walrus, Sui, zkLogin are load-bearing |
 
 ### The Single Sentence That Matters
@@ -289,8 +309,8 @@ Firebase handles high-frequency social actions (likes, saves, copies, follows) w
 **Primary track:** Entertainment and Culture
 
 **Secondary justifications:**
-- **Programmable Storage** — Walrus-native media storage
-- **Payments and Wallets** — SUI creator tipping, zkLogin onboarding
+- **Programmable Storage** — Walrus-native media storage, Seal-encrypted premium content
+- **Payments and Wallets** — SUI creator tipping, zkLogin onboarding, sponsored gasless royalty/attribution transactions, Seal payment-gated premium unlocks
 - **AI** — AI metadata generation, prompt marketplace concept
 
 ---
@@ -329,7 +349,7 @@ Followers pay monthly SUI to access premium prompts, private workflows, and earl
 
 **Paid Like Platform Fee** — Paid likes currently route 100% directly to creators with zero platform cut. This is intentional — it builds trust and removes friction at the most critical early stage. A small platform fee on paid likes may be introduced later once the creator economy on WalTube is self-sustaining, funded by volume rather than percentage.
 
-**Sponsored Sui Transactions** — Currently users pay their own Sui gas fees for onchain actions. Future integration of Sui's sponsored transaction feature will allow WalTube to absorb gas costs on behalf of users, making every onchain action — forks, paid likes, attribution writes — completely invisible and frictionless. Zero gas prompts. Zero crypto knowledge required. The full Web2 experience with full Web3 ownership underneath.
+**Sponsored Sui Transactions — Live for Royalties & Attribution.** Sponsored transactions are already live for two flows: royalty distribution payouts and attribution record writes. WalTube absorbs the gas fee through Sui's sponsored transaction feature (via Enoki), so forking a prompt and routing royalties back through the chain costs creators and forkers nothing in gas. Expanding sponsorship to the rest of WalTube's onchain actions — paid likes, premium card purchases — is the next step toward making every action on the platform completely invisible from a gas perspective. Zero gas prompts. Zero crypto knowledge required. The full Web2 experience with full Web3 ownership underneath.
 
 ---
 
@@ -392,4 +412,4 @@ The infrastructure is already here. Walrus gives us permanent storage. Sui gives
 
 ---
 
-*Built with React, Tailwind CSS, Firebase, Sui, Walrus, and Enoki zkLogin.*
+*Built with React, Tailwind CSS, Firebase, Sui, Walrus, Seal, and Enoki (zkLogin + sponsored transactions).*
